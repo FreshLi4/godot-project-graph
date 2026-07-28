@@ -20,10 +20,10 @@
   - [x] \[0.1.0-FE-A-003] 用户可以按名称、路径或类型搜索
   - [x] \[0.1.0-FE-A-004] 用户可以双击节点打开对应场景、脚本或资源
   - [x] \[0.1.0-API-A-001] 用户可以把当前图谱导出为 JSON
-- [ ] \[0.1.0-QA-A-000] 验证 Phase 1 addon #epic #P0
+- [x] \[0.1.0-QA-A-000] 验证 Phase 1 addon #epic #P0
   - [x] \[0.1.0-QA-A-001] fixture 测试覆盖节点分类、依赖边、Schema 与 JSON 往返
   - [x] \[0.1.0-QA-A-002] Godot headless editor 可以启用插件且无脚本错误
-  - [ ] \[0.1.0-QA-A-003] GitHub Actions 运行同等检查
+  - [x] \[0.1.0-QA-A-003] GitHub Actions 运行同等检查
 
 ### agent/phase-1-addon: 建立公开项目协作基础
 
