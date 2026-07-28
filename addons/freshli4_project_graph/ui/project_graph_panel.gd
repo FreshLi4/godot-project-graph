@@ -87,13 +87,13 @@ func _build_ui() -> void:
 	add_child(_graph_edit)
 
 	_export_dialog = EditorFileDialog.new()
+	add_child(_export_dialog)
 	_export_dialog.title = "Export Project Graph JSON"
 	_export_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
 	_export_dialog.file_mode = EditorFileDialog.FILE_MODE_SAVE_FILE
 	_export_dialog.filters = PackedStringArray(["*.json ; JSON files"])
 	_export_dialog.current_file = "project-graph.json"
 	_export_dialog.file_selected.connect(_export_json)
-	add_child(_export_dialog)
 
 
 func _scan_project() -> void:
