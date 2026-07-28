@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -16,6 +17,8 @@ jobs:
       image: barichello/godot-ci:${{ matrix.godot }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install headless font support
+        run: apt-get update && apt-get install -y --no-install-recommends fontconfig
       - name: Smoke isolated addon installation
         shell: bash
         run: |
