@@ -1,0 +1,16 @@
+.DS_Store
+.godot/
+.import/
+.mono/
+
+.idea/
+.vscode/
+
+*.log
+*.tmp
+mono_crash.*.json
+
+build/
+dist/
+release/
+exports/

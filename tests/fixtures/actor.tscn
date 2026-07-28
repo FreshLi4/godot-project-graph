@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://tests/fixtures/actor.gd" id="1_script"]
+[ext_resource type="Resource" path="res://tests/fixtures/shared_resource.tres" id="2_resource"]
+
+[node name="Actor" type="Node"]
+script = ExtResource("1_script")
+shared_resource = ExtResource("2_resource")

@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  godot:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        godot: ["4.4.1", "4.5.1", "4.6.3"]
+    container:
+      image: barichello/godot-ci:${{ matrix.godot }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke isolated addon installation
+        shell: bash
+        run: |
+          set -o pipefail
+          install_root="$(mktemp -d)"
+          mkdir -p "${install_root}/tests"
+          cp tests/install_project.cfg "${install_root}/project.godot"
+          cp -R addons "${install_root}/addons"
+          cp -R tests/fixtures "${install_root}/tests/fixtures"
+          godot --headless --editor --path "${install_root}" --quit-after 120 -- --project-graph-smoke 2>&1 | tee editor-smoke.log
+          grep -q "PASS: Project Graph editor panel smoke" editor-smoke.log
+          ! grep -E "SCRIPT ERROR|Parse Error|ERROR:" editor-smoke.log
+      - name: Run scanner tests
+        run: godot --headless --path . --script tests/test_runner.gd

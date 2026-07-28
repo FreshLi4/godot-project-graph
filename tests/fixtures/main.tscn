@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://tests/fixtures/actor.tscn" id="1_actor"]
+
+[node name="Main" type="Node"]
+
+[node name="Actor" parent="." instance=ExtResource("1_actor")]

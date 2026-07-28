@@ -1,0 +1,18 @@
+; Engine configuration file.
+; This project is only a development host for the editor addon.
+
+config_version=5
+
+[application]
+
+config/name="FreshLi4 Project Graph Development"
+config/features=PackedStringArray("4.4")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/freshli4_project_graph/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
