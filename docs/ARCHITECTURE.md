@@ -57,7 +57,7 @@ The layout is a deterministic, offline force simulation:
 2. Seed connected nodes with a golden-angle phyllotaxis spiral. The highest inheritance ancestor (or otherwise highest-degree node) starts at the origin, so the seed already fills a disk instead of a ring.
 3. Run a fixed number of damped relaxation steps. Direct edges use a card-aware target length and degree-adaptive spring strength. Pairs with shared neighbors receive a weaker second-order attraction, so structural proximity becomes visual proximity. All connected nodes still repel one another, while hierarchy/degree-weighted gravity pulls structural hubs toward the center.
 4. Use exact pairwise repulsion for small graphs and a deterministic Barnes–Hut quadtree approximation above 180 connected nodes.
-5. Resolve fixed `320 × 190` card rectangles with `96 px` collision padding after relaxation.
+5. Resolve fixed `320 × 320` square card rectangles with `96 px` collision padding after relaxation.
 6. Count straight-line crossings, group nodes into radial bands, and test deterministic angular swaps suggested by neighboring positions. Accept a swap only when crossings fall with bounded mean-edge growth, or when crossings stay equal and total edge length falls. Swapping complete positions preserves the collision result and radial hierarchy.
 7. Place degree-zero nodes on a stable perimeter outside the connected graph's complete card bounds.
 
@@ -76,7 +76,7 @@ The result is reproducible for the same snapshot and does not run an idle physic
 - otherwise the renderer incrementally builds a rectangle-corner visibility graph, discovers secondary blockers, and chooses the shortest verified polyline. Every accepted segment is checked against all visible card rectangles, so edge/card avoidance is a hard constraint rather than a layout preference;
 - routes are cached in graph coordinates and invalidated after node movement or filtering, while pan/zoom only transforms the cached points for drawing.
 
-Cards retain canonical `res://` paths as metadata for search and navigation, but display only the complete filename and asset type. Right-click emits a navigation request to `plugin.gd`, which calls Godot's editor-only `EditorInterface.select_file()` API to reveal the asset in the native FileSystem Dock.
+Cards retain canonical `res://` paths as metadata for search and navigation, but display only the complete filename and asset type. The filename is a non-scrolling, arbitrarily wrapped Label with at least three lines of vertical space; the type is a `42 px` bottom strip. Both content controls ignore mouse input so the GraphNode remains explicitly selectable and draggable. Right-click emits a navigation request to `plugin.gd`, which calls Godot's editor-only `EditorInterface.select_file()` API to reveal the asset in the native FileSystem Dock.
 
 The scanner never executes GDScript. Its inheritance pass reads declarations only, resolves `extends "res://..."`, relative script paths, `preload`/`load`, and project `class_name` declarations, and replaces the less-specific ResourceLoader reference to the same parent with one exact `inherits` edge.
 

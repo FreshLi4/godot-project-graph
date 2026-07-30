@@ -25,3 +25,4 @@ All notable changes to this project will be documented here.
 - Left-button background-drag panning while preserving native node dragging.
 - Node context menu backed by Godot's native FileSystem Dock selection.
 - Rectangle-visibility semantic edge routing with verified clearance from every unrelated card.
+- Selectable and draggable `320 × 320 px` square asset cards with a non-scrolling, three-line-or-taller filename area and compact type strip.

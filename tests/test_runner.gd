@@ -17,8 +17,8 @@ const ProjectGraphPanel = preload(
 
 const FIXTURE_ROOT := "res://tests/fixtures"
 const ROUND_TRIP_PATH := "user://freshli4_project_graph/tests/round-trip.json"
-const CARD_SIZE := Vector2(320.0, 190.0)
-const LARGE_CARD_SIZE := Vector2(420.0, 240.0)
+const CARD_SIZE := Vector2(320.0, 320.0)
+const LARGE_CARD_SIZE := Vector2(420.0, 420.0)
 const LONG_FILENAME_FIXTURE := (
 	FIXTURE_ROOT
 	+ "/this_is_a_deliberately_very_long_asset_filename_that_must_wrap_inside_a_"

@@ -1,7 +1,7 @@
 @tool
 extends RefCounted
 
-const DEFAULT_NODE_SIZE := Vector2(320.0, 190.0)
+const DEFAULT_NODE_SIZE := Vector2(320.0, 320.0)
 const GOLDEN_ANGLE := PI * (3.0 - sqrt(5.0))
 const START_ANGLE := -PI / 2.0
 

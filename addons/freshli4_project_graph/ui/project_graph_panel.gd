@@ -20,10 +20,11 @@ const SemanticConnectionLayer = preload(
 	"res://addons/freshli4_project_graph/ui/semantic_connection_layer.gd"
 )
 
-const CARD_SIZE := Vector2(320.0, 190.0)
-const CARD_BODY_SIZE := Vector2(292.0, 92.0)
+const CARD_SIZE := Vector2(320.0, 320.0)
+const CARD_TYPE_BAR_SIZE := Vector2(292.0, 42.0)
 const TITLE_VIEW_WIDTH := 250.0
-const TITLE_VIEW_HEIGHT := 58.0
+const TITLE_VIEW_HEIGHT := 248.0
+const TITLE_MIN_LINE_COUNT := 3
 const MIN_VISIBLE_CONNECTION_GAP := 64.0
 const CONTEXT_SHOW_IN_FILESYSTEM := 1
 
@@ -286,6 +287,8 @@ func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
 	card.custom_minimum_size = CARD_SIZE
 	card.size = CARD_SIZE
 	card.resizable = false
+	card.selectable = true
+	card.draggable = true
 	var node_id := String(node.get("id", ""))
 	var title := path.get_file()
 	if title.is_empty():
@@ -302,32 +305,23 @@ func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
 		if child is Label:
 			(child as Label).visible = false
 
-	var title_scroll := ScrollContainer.new()
-	title_scroll.custom_minimum_size = Vector2(TITLE_VIEW_WIDTH, TITLE_VIEW_HEIGHT)
-	title_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	title_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	title_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_scroll.mouse_filter = Control.MOUSE_FILTER_PASS
-	titlebar.add_child(title_scroll)
-
 	var full_title := Label.new()
 	full_title.text = title
-	full_title.custom_minimum_size.x = TITLE_VIEW_WIDTH - 16.0
+	full_title.custom_minimum_size = Vector2(TITLE_VIEW_WIDTH, TITLE_VIEW_HEIGHT)
 	full_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	full_title.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	full_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	full_title.clip_text = false
-	full_title.mouse_filter = Control.MOUSE_FILTER_PASS
+	full_title.clip_text = true
+	full_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	full_title.set_meta("full_file_name", true)
-	title_scroll.add_child(full_title)
+	titlebar.add_child(full_title)
 	_title_labels_by_id[node_id] = full_title
 
-	var body_scroll := ScrollContainer.new()
-	body_scroll.custom_minimum_size = CARD_BODY_SIZE
-	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	body_scroll.set_meta("card_body_scroll", true)
-	card.add_child(body_scroll)
+	var type_bar := CenterContainer.new()
+	type_bar.custom_minimum_size = CARD_TYPE_BAR_SIZE
+	type_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	type_bar.set_meta("card_type_bar", true)
+	card.add_child(type_bar)
 
 	var details := Label.new()
 	details.text = "%s%s" % [
@@ -335,11 +329,13 @@ func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
 		" · missing" if missing else "",
 	]
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	details.custom_minimum_size.x = CARD_BODY_SIZE.x - 16.0
+	details.custom_minimum_size.x = CARD_TYPE_BAR_SIZE.x - 16.0
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	details.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	details.modulate = port_color
 	details.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body_scroll.add_child(details)
+	type_bar.add_child(details)
 	return card
 
 
@@ -408,12 +404,25 @@ func _measure_card(card: GraphNode) -> Vector2:
 
 
 func _cards_have_fixed_size() -> bool:
+	if not is_equal_approx(CARD_SIZE.x, CARD_SIZE.y):
+		return false
 	for card_value: Variant in _cards_by_id.values():
 		var card := card_value as GraphNode
 		if not card.size.is_equal_approx(CARD_SIZE):
 			return false
-		var body_scroll := _find_card_body_scroll(card)
-		if body_scroll == null:
+		if not card.selectable or not card.draggable:
+			return false
+		var node_id := String(card.get_meta("asset_id", ""))
+		var title_label := _title_labels_by_id.get(node_id) as Label
+		var type_bar := _find_card_type_bar(card)
+		if (
+			title_label == null
+			or title_label.size.y < _minimum_title_height()
+			or title_label.get_parent() is ScrollContainer
+			or type_bar == null
+			or type_bar.size.y > CARD_TYPE_BAR_SIZE.y + 1.0
+			or type_bar.mouse_filter != Control.MOUSE_FILTER_IGNORE
+		):
 			return false
 	return true
 
@@ -431,12 +440,16 @@ func _semantic_ui_is_valid() -> bool:
 		var title_label := _title_labels_by_id[node_id] as Label
 		var node := _find_node(node_id)
 		var expected_title := String(node.get("path", "")).get_file()
-		var body_scroll := _find_card_body_scroll(_cards_by_id[node_id] as GraphNode)
+		var card := _cards_by_id[node_id] as GraphNode
+		var type_bar := _find_card_type_bar(card)
 		if (
 			title_label.text != expected_title
 			or title_label.autowrap_mode != TextServer.AUTOWRAP_ARBITRARY
-			or body_scroll == null
-			or _control_tree_contains_text(body_scroll, "res://")
+			or title_label.custom_minimum_size.y < _minimum_title_height()
+			or title_label.mouse_filter != Control.MOUSE_FILTER_IGNORE
+			or title_label.get_parent() is ScrollContainer
+			or type_bar == null
+			or _control_tree_contains_text(type_bar, "res://")
 		):
 			return false
 	if not _connection_layer.call("all_routes_clear"):
@@ -468,11 +481,17 @@ func _readability_metrics_are_valid() -> bool:
 	)
 
 
-func _find_card_body_scroll(card: GraphNode) -> ScrollContainer:
+func _find_card_type_bar(card: GraphNode) -> Control:
 	for child: Node in card.get_children():
-		if child is ScrollContainer and bool(child.get_meta("card_body_scroll", false)):
-			return child as ScrollContainer
+		if child is Control and bool(child.get_meta("card_type_bar", false)):
+			return child as Control
 	return null
+
+
+func _minimum_title_height() -> float:
+	var font := get_theme_default_font()
+	var font_size := get_theme_default_font_size()
+	return font.get_height(font_size) * float(TITLE_MIN_LINE_COUNT)
 
 
 func _control_tree_contains_text(root: Node, needle: String) -> bool:
