@@ -55,12 +55,13 @@ The layout is a deterministic, offline force simulation:
 
 1. Build an undirected force topology while retaining directed inheritance pairs. Compute each class's inheritance ancestor level, then sort by hierarchy importance, degree, and stable asset id.
 2. Seed connected nodes with a golden-angle phyllotaxis spiral. The highest inheritance ancestor (or otherwise highest-degree node) starts at the origin, so the seed already fills a disk instead of a ring.
-3. Run a fixed number of damped relaxation steps. Reference edges act as linear springs, all connected nodes repel one another, and degree-weighted gravity pulls structural hubs toward the center. A soft boundary derived from total expanded card area bends long branches back into the target disk.
+3. Run a fixed number of damped relaxation steps. Direct edges use a card-aware target length and degree-adaptive spring strength. Pairs with shared neighbors receive a weaker second-order attraction, so structural proximity becomes visual proximity. All connected nodes still repel one another, while hierarchy/degree-weighted gravity pulls structural hubs toward the center.
 4. Use exact pairwise repulsion for small graphs and a deterministic Barnes–Hut quadtree approximation above 180 connected nodes.
 5. Resolve fixed `320 × 190` card rectangles with `96 px` collision padding after relaxation.
-6. Place degree-zero nodes on a stable perimeter outside the connected graph's complete card bounds.
+6. Count straight-line crossings, group nodes into radial bands, and test deterministic angular swaps suggested by neighboring positions. Accept a swap only when crossings fall with bounded mean-edge growth, or when crossings stay equal and total edge length falls. Swapping complete positions preserves the collision result and radial hierarchy.
+7. Place degree-zero nodes on a stable perimeter outside the connected graph's complete card bounds.
 
-The result is reproducible for the same snapshot and does not run an idle physics loop in the editor. It optimizes legibility, disk occupancy, and hub centrality rather than planar edges; arbitrary cross references can still cross.
+The result is reproducible for the same snapshot and does not run an idle physics loop in the editor. Layout results expose `crossings_before`, `crossings_after`, `mean_edge_length`, and `community_pair_count`; the panel displays the crossing reduction. Arbitrary or non-planar cross references can still cross, but avoidable crossings are an explicit optimization criterion.
 
 ## Semantic edge rendering
 
@@ -80,6 +81,8 @@ The scanner never executes GDScript. Its inheritance pass reads declarations onl
 - Obsidian's official release repository explicitly states that the application is not open source, so this addon does not copy or reverse-engineer its graph code.
 - D3 Force documents deterministic phyllotaxis initialization plus link, many-body, centering, and collision forces.
 - The ForceAtlas2 paper defines linear attraction, degree-weighted repulsion, gravity, overlap prevention, and Barnes–Hut scaling. This implementation adapts those published principles to fixed-step GDScript rather than reproducing Gephi code.
+- ForceAtlas2 and LinLog describe structural communities as local visual density. The shared-neighbor attraction adapts that goal without introducing a separate runtime or full modularity solver.
+- Stress-Plus-X shows that stress/neighborhood preservation and edge crossings need to be optimized together. The bounded angular-swap stage is a lightweight deterministic heuristic for that multi-criterion objective; it is not a full SPX solver.
 - Graphviz `neato` and `sfdp` provide additional public references for spring-model and scalable force-directed layouts.
 
 Primary references:
@@ -88,6 +91,7 @@ Primary references:
 - <https://github.com/obsidianmd/obsidian-releases>
 - <https://d3js.org/d3-force>
 - <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0098679>
+- <https://arxiv.org/abs/1908.01769>
 - <https://graphviz.org/docs/layouts/neato/>
 - <https://graphviz.org/docs/layouts/sfdp/>
 

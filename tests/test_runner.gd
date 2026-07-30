@@ -168,6 +168,15 @@ func _init() -> void:
 		organic_layout == layout.calculate(organic_snapshot, CARD_SIZE),
 		"organic disk layout should remain deterministic",
 	)
+	_expect(
+		int(organic_layout.get("crossings_after", -1))
+		<= int(organic_layout.get("crossings_before", -1)),
+		"readability refinement should never increase edge crossings",
+	)
+	_expect(
+		int(organic_layout.get("community_pair_count", 0)) > 0,
+		"shared neighbors should produce deterministic community attraction pairs",
+	)
 	var oversized_layout := layout.calculate(organic_snapshot, LARGE_CARD_SIZE)
 	_expect(
 		_has_minimum_clearance(
@@ -176,6 +185,43 @@ func _init() -> void:
 			OrganicGraphLayout.NODE_GAP - 0.1,
 		),
 		"layout should preserve clearance for alternate fixed card envelopes",
+	)
+
+	var cluster_snapshot := _make_cluster_snapshot()
+	var cluster_layout := layout.calculate(cluster_snapshot, CARD_SIZE)
+	var cluster_positions := cluster_layout.get("positions", {}) as Dictionary
+	_expect(
+		_mean_linked_distance(cluster_snapshot, cluster_positions)
+		< _mean_unlinked_distance(cluster_snapshot, cluster_positions),
+		"directly related assets should be closer than unrelated assets",
+	)
+	_expect(
+		_has_minimum_clearance(
+			cluster_positions,
+			CARD_SIZE,
+			OrganicGraphLayout.NODE_GAP - 0.1,
+		),
+		"cluster refinement should preserve card clearance",
+	)
+
+	var crossing_snapshot := _make_crossing_snapshot()
+	var crossing_refinement := layout.refine_positions(
+		crossing_snapshot,
+		_make_crossing_positions(),
+		CARD_SIZE,
+	)
+	_expect(
+		int(crossing_refinement.get("crossings_before", -1)) == 1
+		and int(crossing_refinement.get("crossings_after", -1)) == 0,
+		"angular swaps should remove a geometrically avoidable crossing",
+	)
+	_expect(
+		_has_minimum_clearance(
+			crossing_refinement.get("positions", {}) as Dictionary,
+			CARD_SIZE,
+			OrganicGraphLayout.NODE_GAP - 0.1,
+		),
+		"crossing refinement should preserve existing card clearance",
 	)
 
 	var large_snapshot := _make_organic_snapshot(16, 12, 6)
@@ -254,6 +300,20 @@ func _init() -> void:
 	)
 
 	if _failures.is_empty():
+		print(
+			(
+				"READABILITY: crossings organic %d -> %d, large %d -> %d; "
+				+ "cluster linked %.1f vs unlinked %.1f"
+			)
+			% [
+				int(organic_layout.get("crossings_before", 0)),
+				int(organic_layout.get("crossings_after", 0)),
+				int(large_layout.get("crossings_before", 0)),
+				int(large_layout.get("crossings_after", 0)),
+				_mean_linked_distance(cluster_snapshot, cluster_positions),
+				_mean_unlinked_distance(cluster_snapshot, cluster_positions),
+			]
+		)
 		print(
 			"PASS: Project Graph core (%d nodes, %d edges)"
 			% [
@@ -419,6 +479,112 @@ func _make_hierarchy_snapshot() -> Dictionary:
 		),
 	]
 	return GraphSchema.make_snapshot("res://", nodes, edges)
+
+
+func _make_cluster_snapshot() -> Dictionary:
+	var nodes: Array = []
+	for node_id: String in [
+		"hub_a",
+		"a_1",
+		"a_2",
+		"a_3",
+		"hub_b",
+		"b_1",
+		"b_2",
+		"b_3",
+	]:
+		nodes.append(
+			GraphSchema.make_node(
+				node_id,
+				"res://%s.tres" % node_id,
+				"Resource",
+			)
+		)
+	var edges: Array = [
+		GraphSchema.make_edge("hub_a", "a_1"),
+		GraphSchema.make_edge("hub_a", "a_2"),
+		GraphSchema.make_edge("hub_a", "a_3"),
+		GraphSchema.make_edge("a_1", "a_2"),
+		GraphSchema.make_edge("hub_b", "b_1"),
+		GraphSchema.make_edge("hub_b", "b_2"),
+		GraphSchema.make_edge("hub_b", "b_3"),
+		GraphSchema.make_edge("b_1", "b_2"),
+		GraphSchema.make_edge("hub_a", "hub_b"),
+	]
+	return GraphSchema.make_snapshot("res://", nodes, edges)
+
+
+func _make_crossing_snapshot() -> Dictionary:
+	var nodes: Array = []
+	for node_id: String in ["a", "b", "c", "d"]:
+		nodes.append(
+			GraphSchema.make_node(
+				node_id,
+				"res://%s.tres" % node_id,
+				"Resource",
+			)
+		)
+	var edges: Array = [
+		GraphSchema.make_edge("a", "b"),
+		GraphSchema.make_edge("c", "d"),
+	]
+	return GraphSchema.make_snapshot("res://", nodes, edges)
+
+
+func _make_crossing_positions() -> Dictionary:
+	var half_card := CARD_SIZE / 2.0
+	return {
+		"a": Vector2(-300.0, -300.0) - half_card,
+		"b": Vector2(300.0, 300.0) - half_card,
+		"c": Vector2(300.0, -300.0) - half_card,
+		"d": Vector2(-300.0, 300.0) - half_card,
+	}
+
+
+func _mean_linked_distance(snapshot: Dictionary, positions: Dictionary) -> float:
+	var total := 0.0
+	var count := 0
+	for edge_value: Variant in snapshot.get("edges", []):
+		var edge := edge_value as Dictionary
+		var source_id := String(edge.get("source", ""))
+		var target_id := String(edge.get("target", ""))
+		var source_center := (positions[source_id] as Vector2) + CARD_SIZE / 2.0
+		var target_center := (positions[target_id] as Vector2) + CARD_SIZE / 2.0
+		total += source_center.distance_to(target_center)
+		count += 1
+	return total / float(maxi(count, 1))
+
+
+func _mean_unlinked_distance(snapshot: Dictionary, positions: Dictionary) -> float:
+	var linked_pairs: Dictionary = {}
+	for edge_value: Variant in snapshot.get("edges", []):
+		var edge := edge_value as Dictionary
+		var source_id := String(edge.get("source", ""))
+		var target_id := String(edge.get("target", ""))
+		linked_pairs[_undirected_pair_key(source_id, target_id)] = true
+	var node_ids: Array = positions.keys()
+	node_ids.sort()
+	var total := 0.0
+	var count := 0
+	for left_offset: int in node_ids.size():
+		var left_id := String(node_ids[left_offset])
+		for right_offset: int in range(left_offset + 1, node_ids.size()):
+			var right_id := String(node_ids[right_offset])
+			if linked_pairs.has(_undirected_pair_key(left_id, right_id)):
+				continue
+			var left_center := (positions[left_id] as Vector2) + CARD_SIZE / 2.0
+			var right_center := (positions[right_id] as Vector2) + CARD_SIZE / 2.0
+			total += left_center.distance_to(right_center)
+			count += 1
+	return total / float(maxi(count, 1))
+
+
+func _undirected_pair_key(left_id: String, right_id: String) -> String:
+	return (
+		"%s|%s" % [left_id, right_id]
+		if left_id < right_id
+		else "%s|%s" % [right_id, left_id]
+	)
 
 
 func _fills_disk(

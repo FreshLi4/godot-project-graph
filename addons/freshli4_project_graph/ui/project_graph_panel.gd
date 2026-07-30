@@ -27,6 +27,7 @@ const MIN_VISIBLE_CONNECTION_GAP := 64.0
 var _scanner := ProjectGraphScanner.new()
 var _layout := OrganicGraphLayout.new()
 var _snapshot: Dictionary = {}
+var _layout_metrics: Dictionary = {}
 var _graph_names_by_id: Dictionary = {}
 var _cards_by_id: Dictionary = {}
 var _title_widgets_by_id: Dictionary = {}
@@ -223,6 +224,7 @@ func run_editor_smoke() -> void:
 		and _cards_have_fixed_size()
 		and _rendered_cards_have_clearance(MIN_VISIBLE_CONNECTION_GAP)
 		and _semantic_ui_is_valid()
+		and _readability_metrics_are_valid()
 	):
 		print("PASS: Project Graph editor panel smoke (%d graph nodes)" % graph_node_count)
 	else:
@@ -363,6 +365,11 @@ func _apply_organic_layout(fit_view: bool = true) -> void:
 	if _snapshot.is_empty():
 		return
 	var result := _layout.calculate(_snapshot, CARD_SIZE)
+	_layout_metrics = {
+		"crossings_before": int(result.get("crossings_before", 0)),
+		"crossings_after": int(result.get("crossings_after", 0)),
+		"mean_edge_length": float(result.get("mean_edge_length", 0.0)),
+	}
 	var positions := result.get("positions", {}) as Dictionary
 	for node_id: String in _cards_by_id:
 		var card := _cards_by_id[node_id] as GraphNode
@@ -414,6 +421,18 @@ func _semantic_ui_is_valid() -> bool:
 		):
 			return false
 	return found_inheritance
+
+
+func _readability_metrics_are_valid() -> bool:
+	var crossings_before := int(_layout_metrics.get("crossings_before", -1))
+	var crossings_after := int(_layout_metrics.get("crossings_after", -1))
+	var mean_edge_length := float(_layout_metrics.get("mean_edge_length", -1.0))
+	return (
+		crossings_before >= 0
+		and crossings_after >= 0
+		and crossings_after <= crossings_before
+		and mean_edge_length > 0.0
+	)
 
 
 func _find_card_body_scroll(card: GraphNode) -> ScrollContainer:
@@ -504,11 +523,20 @@ func _apply_search(raw_query: String) -> void:
 		_status_label.text = "Ready. Click Scan Project."
 	else:
 		var stats := _snapshot.get("stats", {}) as Dictionary
-		_status_label.text = "%d/%d nodes · %d edges · %d missing" % [
+		var crossing_summary := ""
+		var crossings_before := int(_layout_metrics.get("crossings_before", 0))
+		var crossings_after := int(_layout_metrics.get("crossings_after", 0))
+		if crossings_before > 0:
+			crossing_summary = " · layout crossings %d→%d" % [
+				crossings_before,
+				crossings_after,
+			]
+		_status_label.text = ("%d/%d nodes · %d edges · %d missing%s") % [
 			visible_count,
 			int(stats.get("node_count", 0)),
 			int(stats.get("edge_count", 0)),
 			int(stats.get("missing_node_count", 0)),
+			crossing_summary,
 		]
 
 
