@@ -6,11 +6,11 @@
 
 - [x] \[0.1.0-TOOL-A-000] 提供可直接安装的原生 GDScript addon #epic #P0
   - [x] \[0.1.0-TOOL-A-001] 提供有效的 `plugin.cfg` 与 `EditorPlugin` 入口
-  - [x] \[0.1.0-TOOL-A-002] 在 Godot 主工作区注册 `Project Graph` 页面
+  - [x] \[0.1.0-TOOL-A-002] 在 Godot 主工作区注册 Project Graph 页面
   - [x] \[0.1.0-TOOL-A-003] 禁用插件时完整释放 UI 与信号连接
 - [x] \[0.1.0-DATA-A-000] 建立版本化基础图数据 #epic #P0
   - [x] \[0.1.0-DATA-A-001] 扫描 `res://` 下受支持的静态资产
-  - [x] \[0.1.0-DATA-A-002] 按 Scene、Script、Resource、Mesh、Texture、Audio、Shader 和 Data 分类
+  - [x] \[0.1.0-DATA-A-002] 按 Scene、Script、Resource、Mesh、Texture、Audio、Shader、Data 分类
   - [x] \[0.1.0-DATA-A-003] 通过 Godot 依赖 API 建立精确的 `references` 边
   - [x] \[0.1.0-DATA-A-004] 为缺失依赖保留 missing 节点
   - [x] \[0.1.0-DATA-A-005] 定义并校验 JSON Schema v1

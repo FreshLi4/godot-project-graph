@@ -257,40 +257,37 @@
 ### 项目概况
 
 - 项目名称：FreshLi4 Project Graph
-- 产品简介：以 Godot 原生编辑器插件的形式扫描并可视化项目资产关系，形成可导航、可导出的项目知识图谱。
+- 产品简介：Godot 编辑器插件，扫描并可视化项目资产关系，形成可导航、可导出的知识图谱。
 - 主要用户：维护中大型 Godot 4 项目的开发者、技术美术与 AI 辅助开发团队。
 - 当前阶段：公开 MVP。
 
 ### 技术栈与命令
 
 - 技术栈：Godot 4.4+、纯 GDScript、`EditorPlugin`、`GraphEdit`、JSON Schema v1。
-- 统一入口：用 Godot 打开仓库根目录的 `project.godot`；可通过 `GODOT_BIN` 覆盖 Godot 可执行文件。
-- 开发命令：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --editor --path .`
-- 测试命令：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --path . --script tests/test_runner.gd`
+- 入口：用 Godot 打开 `project.godot`；可通过 `GODOT_BIN` 覆盖可执行文件。
+- 开发：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --editor --path .`
+- 测试：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --path . --script tests/test_runner.gd`
 - 插件 smoke：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --editor --path . --quit-after 120 -- --project-graph-smoke`
-- 构建命令：本项目无需编译；GDScript 由 Godot 加载。
-- 打包命令：发布时只打包 `addons/freshli4_project_graph/`。
-- 发布命令：通过 GitHub Release 发布版本 ZIP；正式发版另行建立需求。
+- 构建：GDScript 由 Godot 加载，无需编译。
+- 打包：发布时只打包 `addons/freshli4_project_graph/`。
 
 ### 文档入口
 
-- 项目说明：`README.md`
-- 需求追踪：`REQUIREMENTS.md`
-- 视觉规范：`DESIGN.md`
-- 架构与数据边界：`docs/ARCHITECTURE.md`
-- 图数据 Schema：`docs/SCHEMA.md`
-- 执行日志：`agent-log/`
+- [`README.md`](README.md) — 项目说明
+- [`REQUIREMENTS.md`](REQUIREMENTS.md) — 需求追踪
+- [`DESIGN.md`](DESIGN.md) — 视觉规范
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — 架构与数据边界
+- [`docs/SCHEMA.md`](docs/SCHEMA.md) — 图数据 Schema
+- `agent-log/` — 执行日志
 
 ### 目录索引
 
-- `addons/freshli4_project_graph/`：可复制到其他 Godot 项目的完整 addon。
-- `addons/freshli4_project_graph/core/`：扫描、Schema 与 JSON 持久化，不依赖编辑器 UI。
-- `addons/freshli4_project_graph/ui/`：编辑器主界面与基础图视图。
-- `tests/fixtures/`：扫描器自动测试使用的最小 Godot 资产。
-- `tests/test_runner.gd`：无头测试入口。
-- `docs/`：架构、Schema 与维护文档。
-- `agent-log/`：当前工作区执行日志。
-- `.github/workflows/`：持续集成。
+- `addons/freshli4_project_graph/` — 可复制到其他 Godot 项目的 addon。
+- `addons/freshli4_project_graph/core/` — 扫描、Schema 与 JSON 持久化。
+- `addons/freshli4_project_graph/ui/` — 编辑器主界面与图视图。
+- `tests/` — 测试入口与 fixture 资产。
+- `docs/` — 架构与 Schema 文档。
+- `.github/workflows/` — CI。
 
 ### 子功能文档入口
 
@@ -298,15 +295,13 @@
 
 ### App 类型补充约束
 
-- Addon 核心保持纯 GDScript，不要求用户安装 .NET、Node.js、Tauri、浏览器运行时或数据库。
-- Phase 1 不扫描 `res://addons/freshli4_project_graph/` 自身，避免图谱被插件实现污染。
-- 扫描器不得实例化用户场景或执行用户脚本；只使用文件枚举与 `ResourceLoader` 依赖信息。
-- 静态分析无法确认运行时行为时，必须在图数据中标为 `inferred`，不得输出为精确事实。
-- 缓存与默认导出写入 `user://freshli4_project_graph/`，不自动修改被扫描项目的 `res://` 内容。
+- Addon 核心保持纯 GDScript，不要求用户安装 .NET、Node.js、Tauri、浏览器或数据库。
+- 扫描器不实例化用户场景或执行用户脚本；只使用文件枚举与 `ResourceLoader` 依赖信息。
+- 静态分析无法确认运行时行为时，必须在图数据中标为 `inferred`。
+- 缓存与默认导出写入 `user://freshli4_project_graph/`，不修改被扫描项目的 `res://`。
 - 公共 API 和 Schema 变更必须更新 `docs/SCHEMA.md` 与版本号。
-- 引用第三方实现时保留来源和许可证；当前 Phase 1 为 clean-room 实现。
 
 ### 维护提示
 
-- 修改「标准内容」时，**必须**同步更新 `agent-template/app-agent-template/AGENTS.md` 与 `agent-template/game-agent-template/AGENTS.md` 的对应章节。
+- 修改「标准内容」时，**必须**同步更新 `agent-template/` 对应模板。
 - 本文件应始终在「标准内容」原样保留的前提下，仅在「项目专用内容」追加或修改。
