@@ -284,7 +284,7 @@
 ### 目录索引
 
 - `addons/freshli4_project_graph/`：可复制到其他 Godot 项目的完整 addon。
-- `addons/freshli4_project_graph/core/`：扫描、Schema 与 JSON 持久化，不依赖编辑器 UI。
+- `addons/freshli4_project_graph/core/`：扫描、Ignore、有机力导向布局、Schema 与 JSON 持久化，不依赖编辑器 UI。
 - `addons/freshli4_project_graph/ui/`：编辑器主界面与基础图视图。
 - `tests/fixtures/`：扫描器自动测试使用的最小 Godot 资产。
 - `tests/test_runner.gd`：无头测试入口。
@@ -299,7 +299,8 @@
 ### App 类型补充约束
 
 - Addon 核心保持纯 GDScript，不要求用户安装 .NET、Node.js、Tauri、浏览器运行时或数据库。
-- Phase 1 不扫描 `res://addons/freshli4_project_graph/` 自身，避免图谱被插件实现污染。
+- 默认不扫描整个 `res://addons/`、Godot 生成目录和 `res://` 之外的引擎资源，避免图谱被工具实现污染。
+- 自定义 Ignore 配置保存在 `user://freshli4_project_graph/`，并在目录遍历与依赖解析阶段同时生效。
 - 扫描器不得实例化用户场景或执行用户脚本；只使用文件枚举与 `ResourceLoader` 依赖信息。
 - 静态分析无法确认运行时行为时，必须在图数据中标为 `inferred`，不得输出为精确事实。
 - 缓存与默认导出写入 `user://freshli4_project_graph/`，不自动修改被扫描项目的 `res://` 内容。

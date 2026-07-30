@@ -3,7 +3,11 @@ extends RefCounted
 
 const GraphSchema = preload("res://addons/freshli4_project_graph/core/graph_schema.gd")
 
-const SELF_ADDON_PATH := "res://addons/freshli4_project_graph"
+const DEFAULT_IGNORE_PATTERNS := [
+	"res://addons/**",
+	"res://.godot/**",
+	"res://.import/**",
+]
 const IGNORED_DIRECTORY_NAMES := [
 	".git",
 	".godot",
@@ -58,11 +62,16 @@ const DEPENDENCY_EXTENSIONS := [
 
 var _nodes_by_id: Dictionary = {}
 var _edges_by_id: Dictionary = {}
+var _ignore_patterns := PackedStringArray()
 
 
-func scan_project(root_path: String = "res://") -> Dictionary:
+func scan_project(
+	root_path: String = "res://",
+	custom_ignore_patterns: PackedStringArray = PackedStringArray(),
+) -> Dictionary:
 	_nodes_by_id.clear()
 	_edges_by_id.clear()
+	_ignore_patterns = get_combined_ignore_patterns(custom_ignore_patterns)
 
 	var normalized_root := _normalize_root(root_path)
 	var files := PackedStringArray()
@@ -85,6 +94,8 @@ func scan_project(root_path: String = "res://") -> Dictionary:
 
 
 func _collect_files(directory_path: String, output: PackedStringArray) -> void:
+	if _is_ignored_path(directory_path):
+		return
 	var directory := DirAccess.open(directory_path)
 	if directory == null:
 		return
@@ -96,10 +107,13 @@ func _collect_files(directory_path: String, output: PackedStringArray) -> void:
 		if directory.current_is_dir():
 			if (
 				not IGNORED_DIRECTORY_NAMES.has(entry_name)
-				and not entry_path.begins_with(SELF_ADDON_PATH)
+				and not _is_ignored_path(entry_path)
 			):
 				_collect_files(entry_path, output)
-		elif not entry_name.begins_with("."):
+		elif (
+			not entry_name.begins_with(".")
+			and not _is_ignored_path(entry_path)
+		):
 			output.append(entry_path)
 		entry_name = directory.get_next()
 	directory.list_dir_end()
@@ -111,7 +125,7 @@ func _scan_dependencies(source_path: String) -> void:
 		if (
 			dependency_path.is_empty()
 			or not dependency_path.begins_with("res://")
-			or dependency_path.begins_with(SELF_ADDON_PATH)
+			or _is_ignored_path(dependency_path)
 		):
 			continue
 
@@ -167,6 +181,50 @@ func _normalize_root(root_path: String) -> String:
 	if normalized != "res://" and normalized.ends_with("/"):
 		normalized = normalized.trim_suffix("/")
 	return normalized
+
+
+static func get_combined_ignore_patterns(
+	custom_ignore_patterns: PackedStringArray = PackedStringArray(),
+) -> PackedStringArray:
+	var combined := normalize_ignore_patterns(PackedStringArray(DEFAULT_IGNORE_PATTERNS))
+	for pattern: String in normalize_ignore_patterns(custom_ignore_patterns):
+		if not combined.has(pattern):
+			combined.append(pattern)
+	return combined
+
+
+static func normalize_ignore_patterns(
+	raw_patterns: PackedStringArray,
+) -> PackedStringArray:
+	var normalized_patterns := PackedStringArray()
+	for raw_pattern: String in raw_patterns:
+		var pattern := raw_pattern.strip_edges().replace("\\", "/")
+		if pattern.is_empty() or pattern.begins_with("#"):
+			continue
+		if not pattern.begins_with("res://"):
+			pattern = "res://" + pattern.trim_prefix("/")
+		if not normalized_patterns.has(pattern):
+			normalized_patterns.append(pattern)
+	return normalized_patterns
+
+
+func _is_ignored_path(path: String) -> bool:
+	var normalized_path := path.replace("\\", "/").trim_suffix("/")
+	for pattern: String in _ignore_patterns:
+		if pattern.ends_with("/**"):
+			var prefix := pattern.trim_suffix("/**").trim_suffix("/")
+			if normalized_path == prefix or normalized_path.begins_with(prefix + "/"):
+				return true
+		elif pattern.ends_with("/"):
+			var prefix := pattern.trim_suffix("/")
+			if normalized_path == prefix or normalized_path.begins_with(prefix + "/"):
+				return true
+		elif pattern.contains("*") or pattern.contains("?"):
+			if normalized_path.match(pattern):
+				return true
+		elif normalized_path == pattern:
+			return true
+	return false
 
 
 func _is_supported_asset(path: String) -> bool:
