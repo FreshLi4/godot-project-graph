@@ -14,3 +14,8 @@ All notable changes to this project will be documented here.
 - Degree-weighted hub centering, Barnes–Hut large-graph repulsion, collision constraints, and outermost independent nodes.
 - One-click organic re-layout and automatic view fitting.
 - Scan-time Ignore settings with default addon and Godot-generated-directory exclusions.
+- Directed semantic edge renderer with arrowheads, relation colors, dashed inferred/dynamic edges, and an in-editor legend.
+- Static GDScript `class_name` / `extends` inheritance edges directed child-to-parent.
+- Inheritance-aware centrality that pulls higher parent classes toward the graph center.
+- Fixed-size scrollable asset cards, ellipsized titles, hover/selection marquees, and full-title pointer popups.
+- Card collision clearance validated against rendered editor nodes.

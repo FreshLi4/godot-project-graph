@@ -16,6 +16,9 @@ FreshLi4 Project Graph scans a Godot project without instantiating scenes or exe
 - 原生 GraphEdit 浏览：在 Godot 编辑器内搜索、导航、双击打开资产。
 - JSON Schema v1 导出：可版本化的结构化图谱数据，供外部工具消费。
 - 有机力导向布局：高连接度节点靠近中心，连通节点填充圆盘，独立节点位于最外层。
+- 语义化有向边：静态引用为灰色实线箭头，继承为青色实线箭头，推断/动态关系为琥珀色虚线箭头。
+- GDScript 继承：静态解析 `class_name` 与 `extends`，子类指向父类，并把更高层父类拉向圆心。
+- 固定尺寸卡片：正文自动换行并可纵向滚动；长标题默认省略，悬停或选中时横向展示完整名称。
 - 扫描 Ignore：默认排除 addons 和 Godot 生成目录，并支持持久化项目级规则。
 
 ## 快速开始
@@ -31,6 +34,8 @@ addons/freshli4_project_graph/
 ## 使用
 
 打开 **Project Graph** 并点击 **Scan Project**。连接最多的资产会成为中心锚点，其他连通资产通过确定性的固定步数力模拟填充圆盘内部，零连接资产则放在连通团簇之外。手动拖动节点后，可以点击 **Organic Layout** 恢复布局。
+
+点击 **Legend…** 可以随时查看颜色和线型语义。蓝色只表示 Scene 资产，不表示引用方向；方向统一由箭头表达。继承关系固定从子类指向父类，父类祖先层级越高，布局中心权重越大。正文区域可使用鼠标滚轮纵向滚动；长标题在悬停或选中时会横向滚动，并在鼠标旁显示完整名称。
 
 点击 **Ignore…** 可以添加项目相对路径或通配模式，每行一条：
 
@@ -67,8 +72,9 @@ res://generated/*.tres
 
 ## 边界与限制
 
-- Phase 1 不包含 C# 或 GDScript 完整调用图。
+- 当前不包含 C# 继承或 GDScript 完整调用图，只静态解析 GDScript `class_name` / `extends`。
 - 静态资源关系以 Godot `ResourceLoader` 报告的信息为准。
+- 当前扫描不会主动产生运行时 `creates` 边；当后续分析器输出 inferred/dynamic 边时，渲染器已固定使用琥珀色虚线。
 - 扫描器不实例化用户场景，也不执行用户脚本。
 - Ignore 规则在目录遍历和依赖收集前生效。
 - Addon 不依赖 .NET、Node.js、Tauri、浏览器或数据库。

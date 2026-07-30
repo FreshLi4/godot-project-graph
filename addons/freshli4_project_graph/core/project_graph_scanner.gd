@@ -86,6 +86,8 @@ func scan_project(
 		if _nodes_by_id.has(path) and _can_report_dependencies(path):
 			_scan_dependencies(path)
 
+	_scan_gdscript_inheritance(files)
+
 	var nodes: Array = _nodes_by_id.values()
 	var edges: Array = _edges_by_id.values()
 	nodes.sort_custom(_sort_by_id)
@@ -138,6 +140,115 @@ func _scan_dependencies(source_path: String) -> void:
 
 		var edge := GraphSchema.make_edge(source_path, dependency_path)
 		_edges_by_id[String(edge["id"])] = edge
+
+
+func _scan_gdscript_inheritance(files: PackedStringArray) -> void:
+	var class_paths: Dictionary = {}
+	var script_sources: Dictionary = {}
+	for path: String in files:
+		if path.get_extension().to_lower() != "gd" or not _nodes_by_id.has(path):
+			continue
+		var source := _read_text(path)
+		if source.is_empty():
+			continue
+		script_sources[path] = source
+		var declared_class := _find_declaration_value(source, "class_name")
+		if not declared_class.is_empty():
+			class_paths[declared_class] = path
+
+	for source_path_value: Variant in script_sources:
+		var source_path := String(source_path_value)
+		var parent_path := _resolve_gdscript_parent(
+			source_path,
+			String(script_sources[source_path]),
+			class_paths,
+		)
+		if (
+			parent_path.is_empty()
+			or parent_path == source_path
+			or _is_ignored_path(parent_path)
+		):
+			continue
+		var parent_exists := (
+			FileAccess.file_exists(parent_path)
+			or ResourceLoader.exists(parent_path)
+		)
+		if not _nodes_by_id.has(parent_path):
+			_add_asset_node(parent_path, not parent_exists)
+		var reference_id := "%s|%s|%s" % [
+			source_path,
+			GraphSchema.RELATION_REFERENCE,
+			parent_path,
+		]
+		_edges_by_id.erase(reference_id)
+		var inheritance_edge := GraphSchema.make_edge(
+			source_path,
+			parent_path,
+			GraphSchema.RELATION_INHERITS,
+			GraphSchema.ORIGIN_GDSCRIPT_STATIC,
+			GraphSchema.CONFIDENCE_EXACT,
+		)
+		_edges_by_id[String(inheritance_edge["id"])] = inheritance_edge
+
+
+func _resolve_gdscript_parent(
+	source_path: String,
+	source: String,
+	class_paths: Dictionary,
+) -> String:
+	var declaration := _find_extends_declaration(source)
+	if declaration.is_empty():
+		return ""
+	if declaration.begins_with("res://"):
+		return declaration.simplify_path()
+	if declaration.contains("/") or declaration.ends_with(".gd"):
+		return source_path.get_base_dir().path_join(declaration).simplify_path()
+	return String(class_paths.get(declaration, ""))
+
+
+func _find_extends_declaration(source: String) -> String:
+	for raw_line: String in source.split("\n"):
+		var line := raw_line.strip_edges()
+		if line.is_empty() or line.begins_with("#"):
+			continue
+		if not line.begins_with("extends "):
+			continue
+		var expression := line.trim_prefix("extends ").strip_edges()
+		var comment_index := expression.find(" #")
+		if comment_index >= 0:
+			expression = expression.left(comment_index).strip_edges()
+		for function_name: String in ["preload", "load"]:
+			var prefix := function_name + "("
+			if expression.begins_with(prefix) and expression.ends_with(")"):
+				expression = expression.trim_prefix(prefix).trim_suffix(")").strip_edges()
+				break
+		if (
+			expression.length() >= 2
+			and (
+				(expression.begins_with("\"") and expression.ends_with("\""))
+				or (expression.begins_with("'") and expression.ends_with("'"))
+			)
+		):
+			expression = expression.substr(1, expression.length() - 2)
+		return expression
+	return ""
+
+
+func _find_declaration_value(source: String, keyword: String) -> String:
+	var prefix := keyword + " "
+	for raw_line: String in source.split("\n"):
+		var line := raw_line.strip_edges()
+		if line.begins_with(prefix):
+			var value := line.trim_prefix(prefix).strip_edges().get_slice(" ", 0)
+			return value.get_slice("#", 0).strip_edges()
+	return ""
+
+
+func _read_text(path: String) -> String:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return ""
+	return file.get_as_text()
 
 
 func _add_asset_node(path: String, missing: bool) -> void:

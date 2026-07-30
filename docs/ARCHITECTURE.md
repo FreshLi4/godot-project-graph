@@ -12,12 +12,14 @@ EditorPlugin
     |       +-- GraphEdit
     |       +-- search / scan / ignore / export
     |       +-- OrganicGraphLayout
+    |       +-- SemanticConnectionLayer
     |
     +-- ProjectGraphScanner
             |
             +-- ignored-path pruning
             +-- file enumeration
             +-- ResourceLoader dependencies
+            +-- static GDScript class_name / extends
             +-- ProjectGraphSchema
             +-- ProjectGraphStore
             +-- ScanIgnoreSettings
@@ -27,7 +29,8 @@ EditorPlugin
 
 - `plugin.gd` owns editor lifecycle and asset navigation.
 - `ui/project_graph_panel.gd` owns user interaction and rendering, but not scanning rules.
-- `core/project_graph_scanner.gd` produces a complete in-memory snapshot and has no editor UI dependency.
+- `ui/semantic_connection_layer.gd` renders per-edge arrows, colors, and solid/dashed confidence semantics behind fixed-size cards.
+- `core/project_graph_scanner.gd` produces a complete in-memory snapshot and has no editor UI dependency. It combines exact `ResourceLoader` references with non-executing GDScript declaration parsing.
 - `core/organic_graph_layout.gd` converts a snapshot into deterministic, disk-filling force-directed positions without depending on `GraphEdit`.
 - `core/scan_ignore_settings.gd` persists project-local custom patterns under `user://`; default exclusions remain scanner invariants.
 - `core/graph_schema.gd` constructs and validates versioned nodes, edges, statistics, and snapshots.
@@ -50,14 +53,26 @@ The UI consumes only a snapshot dictionary. Future renderers can replace `GraphE
 
 The layout is a deterministic, offline force simulation:
 
-1. Build an undirected topology and sort connected nodes by degree, then stable asset id.
-2. Seed connected nodes with a golden-angle phyllotaxis spiral. The highest-degree node starts at the origin, so the seed already fills a disk instead of a ring.
+1. Build an undirected force topology while retaining directed inheritance pairs. Compute each class's inheritance ancestor level, then sort by hierarchy importance, degree, and stable asset id.
+2. Seed connected nodes with a golden-angle phyllotaxis spiral. The highest inheritance ancestor (or otherwise highest-degree node) starts at the origin, so the seed already fills a disk instead of a ring.
 3. Run a fixed number of damped relaxation steps. Reference edges act as linear springs, all connected nodes repel one another, and degree-weighted gravity pulls structural hubs toward the center. A soft boundary derived from total expanded card area bends long branches back into the target disk.
 4. Use exact pairwise repulsion for small graphs and a deterministic Barnes–Hut quadtree approximation above 180 connected nodes.
-5. Resolve card-sized rectangular collisions after relaxation.
+5. Resolve fixed `320 × 190` card rectangles with `96 px` collision padding after relaxation.
 6. Place degree-zero nodes on a stable perimeter outside the connected graph's complete card bounds.
 
 The result is reproducible for the same snapshot and does not run an idle physics loop in the editor. It optimizes legibility, disk occupancy, and hub centrality rather than planar edges; arbitrary cross references can still cross.
+
+## Semantic edge rendering
+
+`GraphEdit` remains responsible for pan, zoom, selection, dragging, and the minimap, but its undifferentiated default connection lines are not used. `SemanticConnectionLayer` draws each visible edge behind the cards:
+
+- every edge is directed from `source` to `target` and ends in an arrowhead;
+- exact `references` edges are solid neutral gray;
+- exact `inherits` edges are solid cyan and always point child → parent;
+- edges with non-`exact` confidence, runtime/dynamic origin or metadata, plus runtime `creates`, are dashed amber;
+- line endpoints are clipped to the fixed card rectangles instead of disappearing under their centers.
+
+The scanner never executes GDScript. Its inheritance pass reads declarations only, resolves `extends "res://..."`, relative script paths, `preload`/`load`, and project `class_name` declarations, and replaces the less-specific ResourceLoader reference to the same parent with one exact `inherits` edge.
 
 ### Research basis
 

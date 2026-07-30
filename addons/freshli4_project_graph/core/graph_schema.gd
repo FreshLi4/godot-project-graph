@@ -3,8 +3,12 @@ extends RefCounted
 
 const SCHEMA_VERSION := 1
 const RELATION_REFERENCE := "references"
+const RELATION_INHERITS := "inherits"
+const RELATION_CREATES := "creates"
 const CONFIDENCE_EXACT := "exact"
+const CONFIDENCE_INFERRED := "inferred"
 const ORIGIN_RESOURCE_LOADER := "ResourceLoader"
+const ORIGIN_GDSCRIPT_STATIC := "GDScriptStatic"
 
 const NODE_KINDS := [
 	"Scene",

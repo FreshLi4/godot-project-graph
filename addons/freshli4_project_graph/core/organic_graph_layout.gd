@@ -22,10 +22,12 @@ const BARNES_HUT_THRESHOLD := 180
 const BARNES_HUT_THETA := 0.72
 const MAX_QUADTREE_DEPTH := 22
 
-const NODE_GAP := 42.0
-const COLLISION_PASSES := 160
+const NODE_GAP := 96.0
+const COLLISION_PASSES := 320
 const ORPHAN_GAP := 180.0
 const MIN_ORPHAN_RADIUS := 520.0
+const INHERITANCE_LEVEL_WEIGHT := 100
+const DIRECT_CHILD_WEIGHT := 12
 
 
 func calculate(
@@ -37,6 +39,7 @@ func calculate(
 		return {
 			"positions": {},
 			"degrees": {},
+			"hierarchy_levels": {},
 			"root": "",
 			"orphan_ids": PackedStringArray(),
 		}
@@ -48,9 +51,22 @@ func calculate(
 	var topology := _build_topology(node_ids, index_by_id, snapshot.get("edges", []))
 	var adjacency_sets := topology["adjacency"] as Array
 	var edge_pairs := topology["edges"] as Array
+	var inheritance_pairs := topology["inheritance_edges"] as Array
+	var hierarchy_values := _calculate_hierarchy_levels(
+		node_ids.size(),
+		inheritance_pairs,
+	)
+	var direct_child_counts := PackedInt32Array()
+	direct_child_counts.resize(node_ids.size())
+	for pair_value: Variant in inheritance_pairs:
+		var pair := pair_value as Vector2i
+		direct_child_counts[pair.y] += 1
 	var degrees: Dictionary = {}
+	var hierarchy_levels: Dictionary = {}
 	var degree_values := PackedInt32Array()
 	degree_values.resize(node_ids.size())
+	var importance_values := PackedInt32Array()
+	importance_values.resize(node_ids.size())
 	var connected_records: Array = []
 	var orphan_ids := PackedStringArray()
 
@@ -58,6 +74,13 @@ func calculate(
 		var degree := (adjacency_sets[index] as Dictionary).size()
 		degree_values[index] = degree
 		degrees[node_ids[index]] = degree
+		hierarchy_levels[node_ids[index]] = hierarchy_values[index]
+		var importance := (
+			degree
+			+ hierarchy_values[index] * INHERITANCE_LEVEL_WEIGHT
+			+ direct_child_counts[index] * DIRECT_CHILD_WEIGHT
+		)
+		importance_values[index] = importance
 		if degree == 0:
 			orphan_ids.append(node_ids[index])
 		else:
@@ -65,9 +88,10 @@ func calculate(
 				"id": node_ids[index],
 				"index": index,
 				"degree": degree,
+				"importance": importance,
 			})
 
-	connected_records.sort_custom(_sort_degree_records)
+	connected_records.sort_custom(_sort_importance_records)
 	var positions_by_index: Array = []
 	positions_by_index.resize(node_ids.size())
 	for index: int in positions_by_index.size():
@@ -93,6 +117,7 @@ func calculate(
 			connected_indices,
 			edge_pairs,
 			degree_values,
+			importance_values,
 			node_size,
 		)
 
@@ -116,6 +141,7 @@ func calculate(
 	return {
 		"positions": positions,
 		"degrees": degrees,
+		"hierarchy_levels": hierarchy_levels,
 		"root": root_id,
 		"orphan_ids": orphan_ids,
 	}
@@ -143,7 +169,9 @@ func _build_topology(
 		adjacency[index] = {}
 
 	var unique_edges: Dictionary = {}
+	var unique_inheritance_edges: Dictionary = {}
 	var edge_pairs: Array = []
+	var inheritance_pairs: Array = []
 	for edge_value: Variant in edges:
 		var edge := edge_value as Dictionary
 		var source_id := String(edge.get("source", ""))
@@ -156,6 +184,11 @@ func _build_topology(
 			continue
 		var source_index := int(index_by_id[source_id])
 		var target_index := int(index_by_id[target_id])
+		if String(edge.get("relation", "")) == "inherits":
+			var inheritance_key := "%d:%d" % [source_index, target_index]
+			if not unique_inheritance_edges.has(inheritance_key):
+				unique_inheritance_edges[inheritance_key] = true
+				inheritance_pairs.append(Vector2i(source_index, target_index))
 		var low_index := mini(source_index, target_index)
 		var high_index := maxi(source_index, target_index)
 		var edge_key := "%d:%d" % [low_index, high_index]
@@ -167,13 +200,38 @@ func _build_topology(
 		edge_pairs.append(Vector2i(low_index, high_index))
 
 	edge_pairs.sort_custom(_sort_edge_pairs)
+	inheritance_pairs.sort_custom(_sort_edge_pairs)
 	return {
 		"adjacency": adjacency,
 		"edges": edge_pairs,
+		"inheritance_edges": inheritance_pairs,
 	}
 
 
-func _sort_degree_records(left: Dictionary, right: Dictionary) -> bool:
+func _calculate_hierarchy_levels(
+	node_count: int,
+	inheritance_pairs: Array,
+) -> PackedInt32Array:
+	var levels := PackedInt32Array()
+	levels.resize(node_count)
+	for _pass_index: int in node_count:
+		var changed := false
+		for pair_value: Variant in inheritance_pairs:
+			var pair := pair_value as Vector2i
+			var next_level := levels[pair.x] + 1
+			if next_level > levels[pair.y]:
+				levels[pair.y] = next_level
+				changed = true
+		if not changed:
+			break
+	return levels
+
+
+func _sort_importance_records(left: Dictionary, right: Dictionary) -> bool:
+	var left_importance := int(left["importance"])
+	var right_importance := int(right["importance"])
+	if left_importance != right_importance:
+		return left_importance > right_importance
 	var left_degree := int(left["degree"])
 	var right_degree := int(right["degree"])
 	if left_degree != right_degree:
@@ -192,6 +250,7 @@ func _relax_connected_graph(
 	connected_indices: PackedInt32Array,
 	edge_pairs: Array,
 	degrees: PackedInt32Array,
+	importance: PackedInt32Array,
 	node_size: Vector2,
 ) -> void:
 	if connected_indices.is_empty():
@@ -199,12 +258,14 @@ func _relax_connected_graph(
 
 	var local_positions: Array = []
 	var local_degrees := PackedInt32Array()
+	var local_importance := PackedInt32Array()
 	var local_by_global: Dictionary = {}
 	for local_index: int in connected_indices.size():
 		var global_index := connected_indices[local_index]
 		local_by_global[global_index] = local_index
 		local_positions.append(all_positions[global_index])
 		local_degrees.append(degrees[global_index])
+		local_importance.append(importance[global_index])
 
 	var local_edges: Array = []
 	for edge_pair_value: Variant in edge_pairs:
@@ -220,9 +281,9 @@ func _relax_connected_graph(
 	for index: int in velocities.size():
 		velocities[index] = Vector2.ZERO
 
-	var max_degree := 1
-	for degree: int in local_degrees:
-		max_degree = maxi(max_degree, degree)
+	var max_importance := 1
+	for importance_value: int in local_importance:
+		max_importance = maxi(max_importance, importance_value)
 
 	var iterations := (
 		SMALL_GRAPH_ITERATIONS
@@ -270,7 +331,7 @@ func _relax_connected_graph(
 		for index: int in local_positions.size():
 			if index == 0:
 				continue
-			var centrality := float(local_degrees[index]) / float(max_degree)
+			var centrality := float(local_importance[index]) / float(max_importance)
 			var center_force := (
 				-(local_positions[index] as Vector2)
 				* CENTER_STRENGTH

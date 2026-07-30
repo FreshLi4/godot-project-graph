@@ -15,26 +15,41 @@ const OrganicGraphLayout = preload(
 const ScanIgnoreSettings = preload(
 	"res://addons/freshli4_project_graph/core/scan_ignore_settings.gd"
 )
+const SemanticConnectionLayer = preload(
+	"res://addons/freshli4_project_graph/ui/semantic_connection_layer.gd"
+)
 
-const CARD_SIZE := Vector2(270.0, 96.0)
+const CARD_SIZE := Vector2(320.0, 190.0)
+const CARD_BODY_SIZE := Vector2(292.0, 128.0)
+const TITLE_VIEW_WIDTH := 250.0
+const MIN_VISIBLE_CONNECTION_GAP := 64.0
 
 var _scanner := ProjectGraphScanner.new()
 var _layout := OrganicGraphLayout.new()
 var _snapshot: Dictionary = {}
 var _graph_names_by_id: Dictionary = {}
 var _cards_by_id: Dictionary = {}
+var _title_widgets_by_id: Dictionary = {}
+var _selected_title_ids: Dictionary = {}
+var _title_tweens_by_id: Dictionary = {}
+var _hovered_title_id := ""
 var _custom_ignore_patterns := PackedStringArray()
 
 var _scan_button: Button
 var _layout_button: Button
 var _ignore_button: Button
+var _legend_button: Button
 var _export_button: Button
 var _search_field: LineEdit
 var _status_label: Label
 var _graph_edit: GraphEdit
+var _connection_layer: Control
 var _export_dialog: EditorFileDialog
 var _ignore_dialog: ConfirmationDialog
 var _ignore_editor: TextEdit
+var _legend_dialog: AcceptDialog
+var _title_popup: PopupPanel
+var _title_popup_label: Label
 
 
 func _ready() -> void:
@@ -73,6 +88,15 @@ func _build_ui() -> void:
 	_ignore_button.pressed.connect(_show_ignore_dialog)
 	toolbar.add_child(_ignore_button)
 
+	_legend_button = Button.new()
+	_legend_button.text = "Legend…"
+	_legend_button.tooltip_text = (
+		"Node colors identify asset types. "
+		+ "Arrow color and line style identify relationship semantics."
+	)
+	_legend_button.pressed.connect(_show_legend_dialog)
+	toolbar.add_child(_legend_button)
+
 	_export_button = Button.new()
 	_export_button.text = "Export JSON"
 	_export_button.disabled = true
@@ -102,7 +126,14 @@ func _build_ui() -> void:
 	_graph_edit.zoom_min = 0.02
 	_graph_edit.connection_lines_curvature = 0.35
 	_graph_edit.add_valid_connection_type(0, 0)
+	_graph_edit.node_selected.connect(_on_node_selected)
+	_graph_edit.node_deselected.connect(_on_node_deselected)
 	add_child(_graph_edit)
+
+	_connection_layer = SemanticConnectionLayer.new()
+	_connection_layer.name = "SemanticConnections"
+	_connection_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_graph_edit.add_child(_connection_layer)
 
 	_export_dialog = EditorFileDialog.new()
 	add_child(_export_dialog)
@@ -158,6 +189,9 @@ func _build_ui() -> void:
 	ignore_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ignore_content.add_child(ignore_help)
 
+	_build_legend_dialog()
+	_build_title_popup()
+
 
 func _scan_project() -> void:
 	_scan_button.disabled = true
@@ -172,6 +206,10 @@ func _scan_project() -> void:
 
 func run_editor_smoke() -> void:
 	_scan_project()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_apply_organic_layout(false)
+	await get_tree().process_frame
 	var graph_node_count := 0
 	var graph_positions: Dictionary = {}
 	for child: Node in _graph_edit.get_children():
@@ -179,12 +217,18 @@ func run_editor_smoke() -> void:
 			graph_node_count += 1
 			var graph_node := child as GraphNode
 			graph_positions[graph_node.position_offset.round()] = true
-	if graph_node_count > 0 and (
-		graph_node_count == 1 or graph_positions.size() > 1
+	if (
+		graph_node_count > 0
+		and (graph_node_count == 1 or graph_positions.size() > 1)
+		and _cards_have_fixed_size()
+		and _rendered_cards_have_clearance(MIN_VISIBLE_CONNECTION_GAP)
+		and _semantic_ui_is_valid()
 	):
 		print("PASS: Project Graph editor panel smoke (%d graph nodes)" % graph_node_count)
 	else:
-		push_error("Project Graph editor panel smoke rendered an invalid layout")
+		push_error(
+			"Project Graph editor panel smoke rendered overlapping or invalid cards"
+		)
 
 
 func _render_snapshot() -> void:
@@ -201,7 +245,7 @@ func _render_snapshot() -> void:
 		_cards_by_id[node_id] = card
 
 	_apply_organic_layout(false)
-	_fit_graph_to_view.call_deferred()
+	_finalize_fixed_card_layout.call_deferred()
 
 
 func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
@@ -212,13 +256,58 @@ func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
 
 	var card := GraphNode.new()
 	card.name = graph_name
-	card.title = String(node.get("label", path.get_file()))
+	card.title = ""
 	card.custom_minimum_size = CARD_SIZE
-	card.resizable = true
+	card.size = CARD_SIZE
+	card.resizable = false
 	card.tooltip_text = path
-	card.set_meta("asset_id", String(node.get("id", "")))
+	var node_id := String(node.get("id", ""))
+	var title := String(node.get("label", path.get_file()))
+	card.set_meta("asset_id", node_id)
 	card.set_meta("asset_path", path)
+	card.set_meta("fixed_card_size", CARD_SIZE)
 	card.gui_input.connect(_on_card_input.bind(card))
+	card.mouse_entered.connect(_on_card_mouse_entered.bind(node_id, title))
+	card.mouse_exited.connect(_on_card_mouse_exited.bind(node_id))
+
+	var titlebar := card.get_titlebar_hbox()
+	for child: Node in titlebar.get_children():
+		if child is Label:
+			(child as Label).visible = false
+
+	var ellipsis_title := Label.new()
+	ellipsis_title.text = title
+	ellipsis_title.custom_minimum_size = Vector2(TITLE_VIEW_WIDTH, 24.0)
+	ellipsis_title.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	ellipsis_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	ellipsis_title.clip_text = true
+	ellipsis_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	titlebar.add_child(ellipsis_title)
+
+	var title_scroll := ScrollContainer.new()
+	title_scroll.custom_minimum_size = Vector2(TITLE_VIEW_WIDTH, 24.0)
+	title_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	title_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	title_scroll.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_scroll.visible = false
+	titlebar.add_child(title_scroll)
+
+	var full_title := Label.new()
+	full_title.text = title
+	full_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_scroll.add_child(full_title)
+	_title_widgets_by_id[node_id] = {
+		"ellipsis": ellipsis_title,
+		"scroll": title_scroll,
+		"full": full_title,
+	}
+
+	var body_scroll := ScrollContainer.new()
+	body_scroll.custom_minimum_size = CARD_BODY_SIZE
+	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	body_scroll.set_meta("card_body_scroll", true)
+	card.add_child(body_scroll)
 
 	var details := Label.new()
 	details.text = "%s%s\n%s" % [
@@ -227,11 +316,11 @@ func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
 		path,
 	]
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	details.custom_minimum_size = CARD_SIZE - Vector2(24.0, 34.0)
+	details.custom_minimum_size.x = CARD_BODY_SIZE.x - 16.0
+	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details.modulate = port_color
 	details.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(details)
-	card.set_slot(0, true, 0, port_color, true, 0, port_color)
+	body_scroll.add_child(details)
 	return card
 
 
@@ -243,10 +332,15 @@ func _clear_graph() -> void:
 			child.queue_free()
 	_graph_names_by_id.clear()
 	_cards_by_id.clear()
+	_title_widgets_by_id.clear()
+	_selected_title_ids.clear()
+	_stop_all_title_tweens()
+	_connection_layer.configure(_graph_edit, _cards_by_id, [])
 
 
 func _refresh_connections() -> void:
 	_graph_edit.clear_connections()
+	var visible_edges: Array = []
 	var edges: Array = _snapshot.get("edges", [])
 	for edge_value: Variant in edges:
 		var edge := edge_value as Dictionary
@@ -261,13 +355,8 @@ func _refresh_connections() -> void:
 		var target_card := _cards_by_id[target_id] as GraphNode
 		if not source_card.visible or not target_card.visible:
 			continue
-		_graph_edit.connect_node(
-			_graph_names_by_id[source_id],
-			0,
-			_graph_names_by_id[target_id],
-			0,
-			true,
-		)
+		visible_edges.append(edge)
+	_connection_layer.configure(_graph_edit, _cards_by_id, visible_edges)
 
 
 func _apply_organic_layout(fit_view: bool = true) -> void:
@@ -277,10 +366,92 @@ func _apply_organic_layout(fit_view: bool = true) -> void:
 	var positions := result.get("positions", {}) as Dictionary
 	for node_id: String in _cards_by_id:
 		var card := _cards_by_id[node_id] as GraphNode
+		card.size = CARD_SIZE
 		card.position_offset = positions.get(node_id, Vector2.ZERO)
 	_refresh_connections()
 	if fit_view:
 		_fit_graph_to_view.call_deferred()
+
+
+func _finalize_fixed_card_layout() -> void:
+	await get_tree().process_frame
+	if _snapshot.is_empty():
+		return
+	_apply_organic_layout(false)
+	_fit_graph_to_view.call_deferred()
+
+
+func _measure_card(card: GraphNode) -> Vector2:
+	return card.size if card.size.length_squared() > 1.0 else CARD_SIZE
+
+
+func _cards_have_fixed_size() -> bool:
+	for card_value: Variant in _cards_by_id.values():
+		var card := card_value as GraphNode
+		if not card.size.is_equal_approx(CARD_SIZE):
+			return false
+		var body_scroll := _find_card_body_scroll(card)
+		if body_scroll == null:
+			return false
+	return true
+
+
+func _semantic_ui_is_valid() -> bool:
+	if _graph_edit.get_connection_list().size() != 0:
+		return false
+	if _title_widgets_by_id.size() != _cards_by_id.size():
+		return false
+	var found_inheritance := false
+	for edge_value: Variant in _snapshot.get("edges", []):
+		var edge := edge_value as Dictionary
+		if String(edge.get("relation", "")) != "inherits":
+			continue
+		found_inheritance = true
+		var style := SemanticConnectionLayer.edge_style(edge)
+		if (
+			bool(style.get("dashed", true))
+			or String(style.get("semantic", "")) != "inherits"
+		):
+			return false
+	return found_inheritance
+
+
+func _find_card_body_scroll(card: GraphNode) -> ScrollContainer:
+	for child: Node in card.get_children():
+		if child is ScrollContainer and bool(child.get_meta("card_body_scroll", false)):
+			return child as ScrollContainer
+	return null
+
+
+func _rendered_cards_have_clearance(minimum_clearance: float) -> bool:
+	var node_ids: Array = _cards_by_id.keys()
+	for left_index: int in node_ids.size():
+		var left_card := _cards_by_id[String(node_ids[left_index])] as GraphNode
+		if not left_card.visible:
+			continue
+		var left_rect := Rect2(left_card.position_offset, _measure_card(left_card))
+		for right_index: int in range(left_index + 1, node_ids.size()):
+			var right_card := _cards_by_id[String(node_ids[right_index])] as GraphNode
+			if not right_card.visible:
+				continue
+			var right_rect := Rect2(
+				right_card.position_offset,
+				_measure_card(right_card),
+			)
+			var horizontal_gap := (
+				maxf(left_rect.position.x, right_rect.position.x)
+				- minf(left_rect.end.x, right_rect.end.x)
+			)
+			var vertical_gap := (
+				maxf(left_rect.position.y, right_rect.position.y)
+				- minf(left_rect.end.y, right_rect.end.y)
+			)
+			if (
+				horizontal_gap < minimum_clearance
+				and vertical_gap < minimum_clearance
+			):
+				return false
+	return true
 
 
 func _fit_graph_to_view() -> void:
@@ -358,6 +529,224 @@ func _on_card_input(event: InputEvent, card: GraphNode) -> void:
 	):
 		asset_activated.emit(String(card.get_meta("asset_path", "")))
 		card.accept_event()
+
+
+func _on_card_mouse_entered(node_id: String, title: String) -> void:
+	_hovered_title_id = node_id
+	_set_title_reveal(node_id, true)
+	_show_title_popup(title)
+
+
+func _on_card_mouse_exited(node_id: String) -> void:
+	if _hovered_title_id == node_id:
+		_hovered_title_id = ""
+	if not _selected_title_ids.has(node_id):
+		_set_title_reveal(node_id, false)
+	_title_popup.hide()
+
+
+func _on_node_selected(node: Node) -> void:
+	var card := node as GraphNode
+	if card == null:
+		return
+	var node_id := String(card.get_meta("asset_id", ""))
+	_selected_title_ids[node_id] = true
+	_set_title_reveal(node_id, true)
+
+
+func _on_node_deselected(node: Node) -> void:
+	var card := node as GraphNode
+	if card == null:
+		return
+	var node_id := String(card.get_meta("asset_id", ""))
+	_selected_title_ids.erase(node_id)
+	if _hovered_title_id != node_id:
+		_set_title_reveal(node_id, false)
+
+
+func _set_title_reveal(node_id: String, reveal: bool) -> void:
+	if not _title_widgets_by_id.has(node_id):
+		return
+	var widgets := _title_widgets_by_id[node_id] as Dictionary
+	var ellipsis_title := widgets["ellipsis"] as Label
+	var title_scroll := widgets["scroll"] as ScrollContainer
+	ellipsis_title.visible = not reveal
+	title_scroll.visible = reveal
+	if reveal:
+		_start_title_marquee.call_deferred(node_id)
+	else:
+		_stop_title_tween(node_id)
+		title_scroll.scroll_horizontal = 0
+
+
+func _start_title_marquee(node_id: String) -> void:
+	await get_tree().process_frame
+	if not _title_widgets_by_id.has(node_id):
+		return
+	if _hovered_title_id != node_id and not _selected_title_ids.has(node_id):
+		return
+	_stop_title_tween(node_id)
+	var widgets := _title_widgets_by_id[node_id] as Dictionary
+	var title_scroll := widgets["scroll"] as ScrollContainer
+	var full_title := widgets["full"] as Label
+	var maximum_scroll := maxi(
+		0,
+		ceili(full_title.get_combined_minimum_size().x - title_scroll.size.x),
+	)
+	title_scroll.scroll_horizontal = 0
+	if maximum_scroll <= 0:
+		return
+	var duration := maxf(1.2, float(maximum_scroll) / 55.0)
+	var tween := create_tween()
+	tween.set_loops()
+	tween.tween_interval(0.45)
+	tween.tween_property(
+		title_scroll,
+		"scroll_horizontal",
+		maximum_scroll,
+		duration,
+	).set_trans(Tween.TRANS_LINEAR)
+	tween.tween_interval(0.65)
+	tween.tween_property(
+		title_scroll,
+		"scroll_horizontal",
+		0,
+		duration,
+	).set_trans(Tween.TRANS_LINEAR)
+	_title_tweens_by_id[node_id] = tween
+
+
+func _stop_title_tween(node_id: String) -> void:
+	if not _title_tweens_by_id.has(node_id):
+		return
+	var tween := _title_tweens_by_id[node_id] as Tween
+	if tween != null and tween.is_valid():
+		tween.kill()
+	_title_tweens_by_id.erase(node_id)
+
+
+func _stop_all_title_tweens() -> void:
+	for node_id_value: Variant in _title_tweens_by_id.keys():
+		_stop_title_tween(String(node_id_value))
+
+
+func _build_title_popup() -> void:
+	_title_popup = PopupPanel.new()
+	_title_popup.transient = true
+	_title_popup.unresizable = true
+	add_child(_title_popup)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	_title_popup.add_child(margin)
+
+	_title_popup_label = Label.new()
+	_title_popup_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_title_popup_label.custom_minimum_size.y = 24.0
+	margin.add_child(_title_popup_label)
+
+
+func _show_title_popup(title: String) -> void:
+	_title_popup_label.text = title
+	var popup_width := clampi(
+		ceili(_title_popup_label.get_theme_default_font().get_string_size(
+			title,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1.0,
+			_title_popup_label.get_theme_default_font_size(),
+		).x) + 32,
+		180,
+		560,
+	)
+	var mouse_position := Vector2i(get_viewport().get_mouse_position().round())
+	_title_popup.popup(
+		Rect2i(
+			mouse_position + Vector2i(18, 20),
+			Vector2i(popup_width, 48),
+		)
+	)
+
+
+func _build_legend_dialog() -> void:
+	_legend_dialog = AcceptDialog.new()
+	_legend_dialog.title = "Project Graph Legend"
+	_legend_dialog.get_ok_button().text = "Close"
+	add_child(_legend_dialog)
+
+	var content := VBoxContainer.new()
+	content.custom_minimum_size = Vector2(660.0, 520.0)
+	content.add_theme_constant_override("separation", 10)
+	_legend_dialog.add_child(content)
+
+	var edge_heading := Label.new()
+	edge_heading.text = "Relationship lines"
+	content.add_child(edge_heading)
+
+	var edge_legend := RichTextLabel.new()
+	edge_legend.bbcode_enabled = true
+	edge_legend.fit_content = true
+	edge_legend.custom_minimum_size.y = 118.0
+	edge_legend.text = (
+		"[color=#B8C0CC]━━━━▶[/color]  Static reference · source uses target\n"
+		+ "[color=#6FCFDE]━━━━▶[/color]  Inheritance · child points to parent; "
+		+ "higher ancestors are pulled toward the center\n"
+		+ "[color=#F2B84B]━ ━ ━▶[/color]  Inferred / dynamic · not an exact "
+		+ "static dependency\n\n"
+		+ "Arrowheads always point from the relationship source to its target."
+	)
+	content.add_child(edge_legend)
+
+	var node_heading := Label.new()
+	node_heading.text = "Asset node colors"
+	content.add_child(node_heading)
+
+	var node_grid := GridContainer.new()
+	node_grid.columns = 2
+	node_grid.add_theme_constant_override("h_separation", 12)
+	node_grid.add_theme_constant_override("v_separation", 6)
+	content.add_child(node_grid)
+	for kind: String in [
+		"Scene",
+		"Script",
+		"Resource",
+		"Mesh",
+		"Texture",
+		"Audio",
+		"Shader",
+		"Data",
+	]:
+		_add_legend_color_row(node_grid, kind, _color_for_kind(kind, false))
+	_add_legend_color_row(node_grid, "Missing / broken", _color_for_kind("Data", true))
+
+	var explanation := Label.new()
+	explanation.text = (
+		"Blue means Scene only. Node colors never encode direction or confidence; "
+		+ "those meanings belong exclusively to the relationship lines above."
+	)
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(explanation)
+
+
+func _add_legend_color_row(
+	grid: GridContainer,
+	label_text: String,
+	color: Color,
+) -> void:
+	var swatch := ColorRect.new()
+	swatch.color = color
+	swatch.custom_minimum_size = Vector2(22.0, 18.0)
+	swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	grid.add_child(swatch)
+	var label := Label.new()
+	label.text = "%s · %s" % [label_text, color.to_html(false)]
+	grid.add_child(label)
+
+
+func _show_legend_dialog() -> void:
+	_legend_dialog.popup_centered(Vector2i(700, 580))
 
 
 func _show_export_dialog() -> void:

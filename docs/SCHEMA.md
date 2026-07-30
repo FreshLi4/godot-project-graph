@@ -47,7 +47,12 @@ Phase 1 node kinds are `Scene`, `Script`, `Resource`, `Mesh`, `Texture`, `Audio`
 }
 ```
 
-Phase 1 emits only exact `references` edges reported by Godot. Later schema-compatible phases may add relations such as `contains`, `instantiates`, `inherits`, `creates`, and `located_in`.
+The addon emits:
+
+- exact `references` edges reported by Godot `ResourceLoader`;
+- exact `inherits` edges found by the non-executing GDScript declaration pass, directed child → parent with `origin: "GDScriptStatic"`.
+
+Schema-compatible analyzers may add `contains`, `instantiates`, `creates`, and `located_in`. Consumers should interpret `confidence != "exact"` as inferred and potentially runtime-dependent; the native viewer renders those edges as dashed arrows.
 
 ## Compatibility rules
 

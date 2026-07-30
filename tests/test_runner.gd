@@ -8,10 +8,14 @@ const ProjectGraphScanner = preload(
 const OrganicGraphLayout = preload(
 	"res://addons/freshli4_project_graph/core/organic_graph_layout.gd"
 )
+const SemanticConnectionLayer = preload(
+	"res://addons/freshli4_project_graph/ui/semantic_connection_layer.gd"
+)
 
 const FIXTURE_ROOT := "res://tests/fixtures"
 const ROUND_TRIP_PATH := "user://freshli4_project_graph/tests/round-trip.json"
-const CARD_SIZE := Vector2(270.0, 96.0)
+const CARD_SIZE := Vector2(320.0, 190.0)
+const LARGE_CARD_SIZE := Vector2(420.0, 240.0)
 
 var _failures := PackedStringArray()
 
@@ -27,6 +31,14 @@ func _init() -> void:
 	_expect(_has_node(snapshot, "%s/main.tscn" % FIXTURE_ROOT, "Scene"), "main scene")
 	_expect(_has_node(snapshot, "%s/actor.tscn" % FIXTURE_ROOT, "Scene"), "actor scene")
 	_expect(_has_node(snapshot, "%s/actor.gd" % FIXTURE_ROOT, "Script"), "actor script")
+	_expect(
+		_has_node(snapshot, "%s/base_actor.gd" % FIXTURE_ROOT, "Script"),
+		"base actor script",
+	)
+	_expect(
+		_has_node(snapshot, "%s/child_actor.gd" % FIXTURE_ROOT, "Script"),
+		"child actor script",
+	)
 	_expect(
 		_has_node(snapshot, "%s/shared_resource.tres" % FIXTURE_ROOT, "Resource"),
 		"shared resource",
@@ -55,6 +67,15 @@ func _init() -> void:
 		),
 		"actor scene should reference shared resource",
 	)
+	_expect(
+		_has_edge(
+			snapshot,
+			"%s/child_actor.gd" % FIXTURE_ROOT,
+			"%s/base_actor.gd" % FIXTURE_ROOT,
+			GraphSchema.RELATION_INHERITS,
+		),
+		"GDScript inheritance should point from child to parent",
+	)
 	_expect(_has_unique_ids(snapshot.get("nodes", [])), "node ids should be unique")
 	_expect(_has_unique_ids(snapshot.get("edges", [])), "edge ids should be unique")
 
@@ -66,8 +87,8 @@ func _init() -> void:
 		"organic layout should position every fixture node",
 	)
 	_expect(
-		_is_centered(positions, "%s/actor.tscn" % FIXTURE_ROOT),
-		"highest-degree fixture node should be the organic center",
+		_is_centered(positions, "%s/base_actor.gd" % FIXTURE_ROOT),
+		"highest inheritance ancestor should override degree as the organic center",
 	)
 	_expect(
 		_not_overlapping(positions, CARD_SIZE),
@@ -78,6 +99,47 @@ func _init() -> void:
 		"organic layout should be deterministic",
 	)
 
+	var hierarchy_snapshot := _make_hierarchy_snapshot()
+	var hierarchy_layout := layout.calculate(hierarchy_snapshot, CARD_SIZE)
+	_expect(
+		String(hierarchy_layout.get("root", "")) == "base",
+		"highest GDScript ancestor should be the layout center",
+	)
+	var hierarchy_levels := hierarchy_layout.get("hierarchy_levels", {}) as Dictionary
+	_expect(
+		int(hierarchy_levels.get("base", -1)) > int(hierarchy_levels.get("middle", -1))
+		and int(hierarchy_levels.get("middle", -1)) > int(hierarchy_levels.get("child", -1)),
+		"inheritance hierarchy should increase central weight toward ancestors",
+	)
+	var inheritance_style := SemanticConnectionLayer.edge_style(
+		GraphSchema.make_edge(
+			"child",
+			"base",
+			GraphSchema.RELATION_INHERITS,
+			GraphSchema.ORIGIN_GDSCRIPT_STATIC,
+			GraphSchema.CONFIDENCE_EXACT,
+		)
+	)
+	_expect(
+		not bool(inheritance_style.get("dashed", true))
+		and String(inheritance_style.get("semantic", "")) == "inherits",
+		"exact inheritance should use a solid semantic arrow",
+	)
+	var inferred_style := SemanticConnectionLayer.edge_style(
+		GraphSchema.make_edge(
+			"factory",
+			"spawned",
+			GraphSchema.RELATION_CREATES,
+			"RuntimeAnalyzer",
+			GraphSchema.CONFIDENCE_INFERRED,
+		)
+	)
+	_expect(
+		bool(inferred_style.get("dashed", false))
+		and String(inferred_style.get("semantic", "")) == "inferred_dynamic",
+		"inferred or dynamic relationships should use dashed arrows",
+	)
+
 	var organic_snapshot := _make_organic_snapshot(8, 6, 3)
 	var organic_layout := layout.calculate(organic_snapshot, CARD_SIZE)
 	var organic_positions := organic_layout.get("positions", {}) as Dictionary
@@ -85,6 +147,14 @@ func _init() -> void:
 	_expect(
 		_not_overlapping(organic_positions, CARD_SIZE),
 		"organic cards should not overlap",
+	)
+	_expect(
+		_has_minimum_clearance(
+			organic_positions,
+			CARD_SIZE,
+			OrganicGraphLayout.NODE_GAP - 0.1,
+		),
+		"organic cards should leave visible connector clearance",
 	)
 	_expect(
 		_fills_disk(organic_positions, organic_orphans, "center"),
@@ -97,6 +167,15 @@ func _init() -> void:
 	_expect(
 		organic_layout == layout.calculate(organic_snapshot, CARD_SIZE),
 		"organic disk layout should remain deterministic",
+	)
+	var oversized_layout := layout.calculate(organic_snapshot, LARGE_CARD_SIZE)
+	_expect(
+		_has_minimum_clearance(
+			oversized_layout.get("positions", {}) as Dictionary,
+			LARGE_CARD_SIZE,
+			OrganicGraphLayout.NODE_GAP - 0.1,
+		),
+		"layout should preserve clearance for alternate fixed card envelopes",
 	)
 
 	var large_snapshot := _make_organic_snapshot(16, 12, 6)
@@ -202,13 +281,18 @@ func _has_node(snapshot: Dictionary, id: String, kind: String) -> bool:
 	return false
 
 
-func _has_edge(snapshot: Dictionary, source: String, target: String) -> bool:
+func _has_edge(
+	snapshot: Dictionary,
+	source: String,
+	target: String,
+	relation: String = GraphSchema.RELATION_REFERENCE,
+) -> bool:
 	for edge_value: Variant in snapshot.get("edges", []):
 		var edge := edge_value as Dictionary
 		if (
 			String(edge.get("source", "")) == source
 			and String(edge.get("target", "")) == target
-			and String(edge.get("relation", "")) == "references"
+			and String(edge.get("relation", "")) == relation
 		):
 			return true
 	return false
@@ -242,6 +326,14 @@ func _is_centered(positions: Dictionary, node_id: String) -> bool:
 
 
 func _not_overlapping(positions: Dictionary, card_size: Vector2) -> bool:
+	return _has_minimum_clearance(positions, card_size, 0.0)
+
+
+func _has_minimum_clearance(
+	positions: Dictionary,
+	card_size: Vector2,
+	minimum_clearance: float,
+) -> bool:
 	var node_ids: Array = positions.keys()
 	for left_index: int in node_ids.size():
 		var left_id := String(node_ids[left_index])
@@ -249,7 +341,18 @@ func _not_overlapping(positions: Dictionary, card_size: Vector2) -> bool:
 		for right_index: int in range(left_index + 1, node_ids.size()):
 			var right_id := String(node_ids[right_index])
 			var right_rect := Rect2(positions[right_id], card_size)
-			if left_rect.intersects(right_rect):
+			var horizontal_gap := (
+				maxf(left_rect.position.x, right_rect.position.x)
+				- minf(left_rect.end.x, right_rect.end.x)
+			)
+			var vertical_gap := (
+				maxf(left_rect.position.y, right_rect.position.y)
+				- minf(left_rect.end.y, right_rect.end.y)
+			)
+			if (
+				horizontal_gap < minimum_clearance
+				and vertical_gap < minimum_clearance
+			):
 				return false
 	return true
 
@@ -292,6 +395,29 @@ func _make_organic_snapshot(
 				"Resource",
 			)
 		)
+	return GraphSchema.make_snapshot("res://", nodes, edges)
+
+
+func _make_hierarchy_snapshot() -> Dictionary:
+	var nodes: Array = [
+		GraphSchema.make_node("base", "res://base.gd", "Script"),
+		GraphSchema.make_node("middle", "res://middle.gd", "Script"),
+		GraphSchema.make_node("child", "res://child.gd", "Script"),
+	]
+	var edges: Array = [
+		GraphSchema.make_edge(
+			"child",
+			"middle",
+			GraphSchema.RELATION_INHERITS,
+			GraphSchema.ORIGIN_GDSCRIPT_STATIC,
+		),
+		GraphSchema.make_edge(
+			"middle",
+			"base",
+			GraphSchema.RELATION_INHERITS,
+			GraphSchema.ORIGIN_GDSCRIPT_STATIC,
+		),
+	]
 	return GraphSchema.make_snapshot("res://", nodes, edges)
 
 
