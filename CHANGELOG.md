@@ -17,8 +17,11 @@ All notable changes to this project will be documented here.
 - Directed semantic edge renderer with arrowheads, relation colors, dashed inferred/dynamic edges, and an in-editor legend.
 - Static GDScript `class_name` / `extends` inheritance edges directed child-to-parent.
 - Inheritance-aware centrality that pulls higher parent classes toward the graph center.
-- Fixed-size scrollable asset cards, ellipsized titles, hover/selection marquees, and full-title pointer popups.
+- Fixed-size asset cards with complete arbitrarily wrapped filenames and no displayed resource path.
 - Card collision clearance validated against rendered editor nodes.
 - Relationship-aware clustering with shorter direct links and shared-neighbor attraction.
 - Deterministic radial-band crossing reduction that preserves card clearance and central hierarchy.
 - Layout readability metrics for crossings before/after, mean edge length, and community-pair count.
+- Left-button background-drag panning while preserving native node dragging.
+- Node context menu backed by Godot's native FileSystem Dock selection.
+- Rectangle-visibility semantic edge routing with verified clearance from every unrelated card.

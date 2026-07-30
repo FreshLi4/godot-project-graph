@@ -65,13 +65,18 @@ The result is reproducible for the same snapshot and does not run an idle physic
 
 ## Semantic edge rendering
 
-`GraphEdit` remains responsible for pan, zoom, selection, dragging, and the minimap, but its undifferentiated default connection lines are not used. `SemanticConnectionLayer` draws each visible edge behind the cards:
+`GraphEdit` remains responsible for zoom, selection, node dragging, and the minimap; the panel adds explicit left-button background-drag panning. Its undifferentiated default connection lines are not used. `SemanticConnectionLayer` draws each visible edge behind the cards:
 
 - every edge is directed from `source` to `target` and ends in an arrowhead;
 - exact `references` edges are solid neutral gray;
 - exact `inherits` edges are solid cyan and always point child → parent;
 - edges with non-`exact` confidence, runtime/dynamic origin or metadata, plus runtime `creates`, are dashed amber;
-- line endpoints are clipped to the fixed card rectangles instead of disappearing under their centers.
+- line endpoints are clipped to the fixed card rectangles instead of disappearing under their centers;
+- a direct segment is used only when it clears every unrelated card by `14 px`;
+- otherwise the renderer incrementally builds a rectangle-corner visibility graph, discovers secondary blockers, and chooses the shortest verified polyline. Every accepted segment is checked against all visible card rectangles, so edge/card avoidance is a hard constraint rather than a layout preference;
+- routes are cached in graph coordinates and invalidated after node movement or filtering, while pan/zoom only transforms the cached points for drawing.
+
+Cards retain canonical `res://` paths as metadata for search and navigation, but display only the complete filename and asset type. Right-click emits a navigation request to `plugin.gd`, which calls Godot's editor-only `EditorInterface.select_file()` API to reveal the asset in the native FileSystem Dock.
 
 The scanner never executes GDScript. Its inheritance pass reads declarations only, resolves `extends "res://..."`, relative script paths, `preload`/`load`, and project `class_name` declarations, and replaces the less-specific ResourceLoader reference to the same parent with one exact `inherits` edge.
 

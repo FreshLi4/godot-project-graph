@@ -12,6 +12,7 @@ func _enter_tree() -> void:
 	_panel = ProjectGraphPanel.new()
 	_panel.name = "FreshLi4ProjectGraph"
 	_panel.asset_activated.connect(_open_asset)
+	_panel.asset_reveal_requested.connect(_show_asset_in_filesystem)
 	EditorInterface.get_editor_main_screen().add_child(_panel)
 	_make_visible(false)
 	if OS.get_cmdline_user_args().has("--project-graph-smoke"):
@@ -22,6 +23,8 @@ func _exit_tree() -> void:
 	if is_instance_valid(_panel):
 		if _panel.asset_activated.is_connected(_open_asset):
 			_panel.asset_activated.disconnect(_open_asset)
+		if _panel.asset_reveal_requested.is_connected(_show_asset_in_filesystem):
+			_panel.asset_reveal_requested.disconnect(_show_asset_in_filesystem)
 		_panel.queue_free()
 	_panel = null
 
@@ -57,3 +60,9 @@ func _open_asset(path: String) -> void:
 		EditorInterface.edit_script(resource)
 	else:
 		EditorInterface.edit_resource(resource)
+
+
+func _show_asset_in_filesystem(path: String) -> void:
+	if path.is_empty() or not path.begins_with("res://"):
+		return
+	EditorInterface.select_file(path)

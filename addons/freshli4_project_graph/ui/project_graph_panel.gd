@@ -2,6 +2,7 @@
 extends VBoxContainer
 
 signal asset_activated(path: String)
+signal asset_reveal_requested(path: String)
 
 const ProjectGraphScanner = preload(
 	"res://addons/freshli4_project_graph/core/project_graph_scanner.gd"
@@ -20,9 +21,11 @@ const SemanticConnectionLayer = preload(
 )
 
 const CARD_SIZE := Vector2(320.0, 190.0)
-const CARD_BODY_SIZE := Vector2(292.0, 128.0)
+const CARD_BODY_SIZE := Vector2(292.0, 92.0)
 const TITLE_VIEW_WIDTH := 250.0
+const TITLE_VIEW_HEIGHT := 58.0
 const MIN_VISIBLE_CONNECTION_GAP := 64.0
+const CONTEXT_SHOW_IN_FILESYSTEM := 1
 
 var _scanner := ProjectGraphScanner.new()
 var _layout := OrganicGraphLayout.new()
@@ -30,11 +33,10 @@ var _snapshot: Dictionary = {}
 var _layout_metrics: Dictionary = {}
 var _graph_names_by_id: Dictionary = {}
 var _cards_by_id: Dictionary = {}
-var _title_widgets_by_id: Dictionary = {}
-var _selected_title_ids: Dictionary = {}
-var _title_tweens_by_id: Dictionary = {}
-var _hovered_title_id := ""
+var _title_labels_by_id: Dictionary = {}
 var _custom_ignore_patterns := PackedStringArray()
+var _canvas_drag_active := false
+var _context_asset_path := ""
 
 var _scan_button: Button
 var _layout_button: Button
@@ -49,8 +51,15 @@ var _export_dialog: EditorFileDialog
 var _ignore_dialog: ConfirmationDialog
 var _ignore_editor: TextEdit
 var _legend_dialog: AcceptDialog
-var _title_popup: PopupPanel
-var _title_popup_label: Label
+var _asset_context_menu: PopupMenu
+
+
+static func scroll_offset_after_drag(
+	current_offset: Vector2,
+	mouse_relative: Vector2,
+	zoom: float,
+) -> Vector2:
+	return current_offset - mouse_relative / maxf(zoom, 0.001)
 
 
 func _ready() -> void:
@@ -127,8 +136,11 @@ func _build_ui() -> void:
 	_graph_edit.zoom_min = 0.02
 	_graph_edit.connection_lines_curvature = 0.35
 	_graph_edit.add_valid_connection_type(0, 0)
-	_graph_edit.node_selected.connect(_on_node_selected)
-	_graph_edit.node_deselected.connect(_on_node_deselected)
+	_graph_edit.tooltip_text = (
+		"Drag empty space with the left mouse button to pan. "
+		+ "Drag a card to move that asset."
+	)
+	_graph_edit.gui_input.connect(_on_graph_input)
 	add_child(_graph_edit)
 
 	_connection_layer = SemanticConnectionLayer.new()
@@ -191,7 +203,7 @@ func _build_ui() -> void:
 	ignore_content.add_child(ignore_help)
 
 	_build_legend_dialog()
-	_build_title_popup()
+	_build_asset_context_menu()
 
 
 func _scan_project() -> void:
@@ -226,7 +238,19 @@ func run_editor_smoke() -> void:
 		and _semantic_ui_is_valid()
 		and _readability_metrics_are_valid()
 	):
-		print("PASS: Project Graph editor panel smoke (%d graph nodes)" % graph_node_count)
+		var routing_metrics := _connection_layer.call("get_routing_metrics") as Dictionary
+		print(
+			(
+				"PASS: Project Graph editor panel smoke "
+				+ "(%d graph nodes, %d/%d routed, %d detours, 0 blocked)"
+			)
+			% [
+				graph_node_count,
+				int(routing_metrics.get("routed_edge_count", 0)),
+				int(routing_metrics.get("edge_count", 0)),
+				int(routing_metrics.get("detoured_edge_count", 0)),
+			]
+		)
 	else:
 		push_error(
 			"Project Graph editor panel smoke rendered overlapping or invalid cards"
@@ -262,47 +286,41 @@ func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
 	card.custom_minimum_size = CARD_SIZE
 	card.size = CARD_SIZE
 	card.resizable = false
-	card.tooltip_text = path
 	var node_id := String(node.get("id", ""))
-	var title := String(node.get("label", path.get_file()))
+	var title := path.get_file()
+	if title.is_empty():
+		title = String(node.get("label", node_id))
+	card.tooltip_text = title
 	card.set_meta("asset_id", node_id)
 	card.set_meta("asset_path", path)
+	card.set_meta("asset_missing", missing)
 	card.set_meta("fixed_card_size", CARD_SIZE)
 	card.gui_input.connect(_on_card_input.bind(card))
-	card.mouse_entered.connect(_on_card_mouse_entered.bind(node_id, title))
-	card.mouse_exited.connect(_on_card_mouse_exited.bind(node_id))
 
 	var titlebar := card.get_titlebar_hbox()
 	for child: Node in titlebar.get_children():
 		if child is Label:
 			(child as Label).visible = false
 
-	var ellipsis_title := Label.new()
-	ellipsis_title.text = title
-	ellipsis_title.custom_minimum_size = Vector2(TITLE_VIEW_WIDTH, 24.0)
-	ellipsis_title.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	ellipsis_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	ellipsis_title.clip_text = true
-	ellipsis_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	titlebar.add_child(ellipsis_title)
-
 	var title_scroll := ScrollContainer.new()
-	title_scroll.custom_minimum_size = Vector2(TITLE_VIEW_WIDTH, 24.0)
-	title_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	title_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	title_scroll.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_scroll.visible = false
+	title_scroll.custom_minimum_size = Vector2(TITLE_VIEW_WIDTH, TITLE_VIEW_HEIGHT)
+	title_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	title_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	title_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_scroll.mouse_filter = Control.MOUSE_FILTER_PASS
 	titlebar.add_child(title_scroll)
 
 	var full_title := Label.new()
 	full_title.text = title
-	full_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	full_title.custom_minimum_size.x = TITLE_VIEW_WIDTH - 16.0
+	full_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	full_title.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	full_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	full_title.clip_text = false
+	full_title.mouse_filter = Control.MOUSE_FILTER_PASS
+	full_title.set_meta("full_file_name", true)
 	title_scroll.add_child(full_title)
-	_title_widgets_by_id[node_id] = {
-		"ellipsis": ellipsis_title,
-		"scroll": title_scroll,
-		"full": full_title,
-	}
+	_title_labels_by_id[node_id] = full_title
 
 	var body_scroll := ScrollContainer.new()
 	body_scroll.custom_minimum_size = CARD_BODY_SIZE
@@ -312,10 +330,9 @@ func _make_card(node: Dictionary, graph_name: StringName) -> GraphNode:
 	card.add_child(body_scroll)
 
 	var details := Label.new()
-	details.text = "%s%s\n%s" % [
+	details.text = "%s%s" % [
 		kind,
 		" · missing" if missing else "",
-		path,
 	]
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	details.custom_minimum_size.x = CARD_BODY_SIZE.x - 16.0
@@ -334,9 +351,7 @@ func _clear_graph() -> void:
 			child.queue_free()
 	_graph_names_by_id.clear()
 	_cards_by_id.clear()
-	_title_widgets_by_id.clear()
-	_selected_title_ids.clear()
-	_stop_all_title_tweens()
+	_title_labels_by_id.clear()
 	_connection_layer.configure(_graph_edit, _cards_by_id, [])
 
 
@@ -406,7 +421,25 @@ func _cards_have_fixed_size() -> bool:
 func _semantic_ui_is_valid() -> bool:
 	if _graph_edit.get_connection_list().size() != 0:
 		return false
-	if _title_widgets_by_id.size() != _cards_by_id.size():
+	if _title_labels_by_id.size() != _cards_by_id.size():
+		return false
+	if _asset_context_menu == null or _asset_context_menu.item_count != 1:
+		return false
+	if not _graph_edit.gui_input.is_connected(_on_graph_input):
+		return false
+	for node_id: String in _title_labels_by_id:
+		var title_label := _title_labels_by_id[node_id] as Label
+		var node := _find_node(node_id)
+		var expected_title := String(node.get("path", "")).get_file()
+		var body_scroll := _find_card_body_scroll(_cards_by_id[node_id] as GraphNode)
+		if (
+			title_label.text != expected_title
+			or title_label.autowrap_mode != TextServer.AUTOWRAP_ARBITRARY
+			or body_scroll == null
+			or _control_tree_contains_text(body_scroll, "res://")
+		):
+			return false
+	if not _connection_layer.call("all_routes_clear"):
 		return false
 	var found_inheritance := false
 	for edge_value: Variant in _snapshot.get("edges", []):
@@ -440,6 +473,15 @@ func _find_card_body_scroll(card: GraphNode) -> ScrollContainer:
 		if child is ScrollContainer and bool(child.get_meta("card_body_scroll", false)):
 			return child as ScrollContainer
 	return null
+
+
+func _control_tree_contains_text(root: Node, needle: String) -> bool:
+	if root is Label and (root as Label).text.contains(needle):
+		return true
+	for child: Node in root.get_children():
+		if _control_tree_contains_text(child, needle):
+			return true
+	return false
 
 
 func _rendered_cards_have_clearance(minimum_clearance: float) -> bool:
@@ -557,145 +599,65 @@ func _on_card_input(event: InputEvent, card: GraphNode) -> void:
 	):
 		asset_activated.emit(String(card.get_meta("asset_path", "")))
 		card.accept_event()
+	elif (
+		event is InputEventMouseButton
+		and event.button_index == MOUSE_BUTTON_RIGHT
+		and event.pressed
+	):
+		_show_asset_context_menu(card)
+		card.accept_event()
 
 
-func _on_card_mouse_entered(node_id: String, title: String) -> void:
-	_hovered_title_id = node_id
-	_set_title_reveal(node_id, true)
-	_show_title_popup(title)
-
-
-func _on_card_mouse_exited(node_id: String) -> void:
-	if _hovered_title_id == node_id:
-		_hovered_title_id = ""
-	if not _selected_title_ids.has(node_id):
-		_set_title_reveal(node_id, false)
-	_title_popup.hide()
-
-
-func _on_node_selected(node: Node) -> void:
-	var card := node as GraphNode
-	if card == null:
-		return
-	var node_id := String(card.get_meta("asset_id", ""))
-	_selected_title_ids[node_id] = true
-	_set_title_reveal(node_id, true)
-
-
-func _on_node_deselected(node: Node) -> void:
-	var card := node as GraphNode
-	if card == null:
-		return
-	var node_id := String(card.get_meta("asset_id", ""))
-	_selected_title_ids.erase(node_id)
-	if _hovered_title_id != node_id:
-		_set_title_reveal(node_id, false)
-
-
-func _set_title_reveal(node_id: String, reveal: bool) -> void:
-	if not _title_widgets_by_id.has(node_id):
-		return
-	var widgets := _title_widgets_by_id[node_id] as Dictionary
-	var ellipsis_title := widgets["ellipsis"] as Label
-	var title_scroll := widgets["scroll"] as ScrollContainer
-	ellipsis_title.visible = not reveal
-	title_scroll.visible = reveal
-	if reveal:
-		_start_title_marquee.call_deferred(node_id)
-	else:
-		_stop_title_tween(node_id)
-		title_scroll.scroll_horizontal = 0
-
-
-func _start_title_marquee(node_id: String) -> void:
-	await get_tree().process_frame
-	if not _title_widgets_by_id.has(node_id):
-		return
-	if _hovered_title_id != node_id and not _selected_title_ids.has(node_id):
-		return
-	_stop_title_tween(node_id)
-	var widgets := _title_widgets_by_id[node_id] as Dictionary
-	var title_scroll := widgets["scroll"] as ScrollContainer
-	var full_title := widgets["full"] as Label
-	var maximum_scroll := maxi(
-		0,
-		ceili(full_title.get_combined_minimum_size().x - title_scroll.size.x),
-	)
-	title_scroll.scroll_horizontal = 0
-	if maximum_scroll <= 0:
-		return
-	var duration := maxf(1.2, float(maximum_scroll) / 55.0)
-	var tween := create_tween()
-	tween.set_loops()
-	tween.tween_interval(0.45)
-	tween.tween_property(
-		title_scroll,
-		"scroll_horizontal",
-		maximum_scroll,
-		duration,
-	).set_trans(Tween.TRANS_LINEAR)
-	tween.tween_interval(0.65)
-	tween.tween_property(
-		title_scroll,
-		"scroll_horizontal",
-		0,
-		duration,
-	).set_trans(Tween.TRANS_LINEAR)
-	_title_tweens_by_id[node_id] = tween
-
-
-func _stop_title_tween(node_id: String) -> void:
-	if not _title_tweens_by_id.has(node_id):
-		return
-	var tween := _title_tweens_by_id[node_id] as Tween
-	if tween != null and tween.is_valid():
-		tween.kill()
-	_title_tweens_by_id.erase(node_id)
-
-
-func _stop_all_title_tweens() -> void:
-	for node_id_value: Variant in _title_tweens_by_id.keys():
-		_stop_title_tween(String(node_id_value))
-
-
-func _build_title_popup() -> void:
-	_title_popup = PopupPanel.new()
-	_title_popup.transient = true
-	_title_popup.unresizable = true
-	add_child(_title_popup)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	_title_popup.add_child(margin)
-
-	_title_popup_label = Label.new()
-	_title_popup_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_title_popup_label.custom_minimum_size.y = 24.0
-	margin.add_child(_title_popup_label)
-
-
-func _show_title_popup(title: String) -> void:
-	_title_popup_label.text = title
-	var popup_width := clampi(
-		ceili(_title_popup_label.get_theme_default_font().get_string_size(
-			title,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1.0,
-			_title_popup_label.get_theme_default_font_size(),
-		).x) + 32,
-		180,
-		560,
-	)
-	var mouse_position := Vector2i(get_viewport().get_mouse_position().round())
-	_title_popup.popup(
-		Rect2i(
-			mouse_position + Vector2i(18, 20),
-			Vector2i(popup_width, 48),
+func _on_graph_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed and not event.double_click:
+			_canvas_drag_active = true
+			_graph_edit.mouse_default_cursor_shape = Control.CURSOR_DRAG
+			_graph_edit.accept_event()
+		elif not event.pressed and _canvas_drag_active:
+			_canvas_drag_active = false
+			_graph_edit.mouse_default_cursor_shape = Control.CURSOR_ARROW
+			_graph_edit.accept_event()
+	elif event is InputEventMouseMotion and _canvas_drag_active:
+		if not bool(event.button_mask & MOUSE_BUTTON_MASK_LEFT):
+			_canvas_drag_active = false
+			_graph_edit.mouse_default_cursor_shape = Control.CURSOR_ARROW
+			return
+		_graph_edit.scroll_offset = scroll_offset_after_drag(
+			_graph_edit.scroll_offset,
+			event.relative,
+			_graph_edit.zoom,
 		)
+		_graph_edit.accept_event()
+
+
+func _build_asset_context_menu() -> void:
+	_asset_context_menu = PopupMenu.new()
+	_asset_context_menu.name = "AssetContextMenu"
+	_asset_context_menu.add_item(
+		"Show in FileSystem",
+		CONTEXT_SHOW_IN_FILESYSTEM,
 	)
+	_asset_context_menu.id_pressed.connect(_on_asset_context_menu_selected)
+	add_child(_asset_context_menu)
+
+
+func _show_asset_context_menu(card: GraphNode) -> void:
+	_context_asset_path = String(card.get_meta("asset_path", ""))
+	var unavailable := (
+		_context_asset_path.is_empty()
+		or not _context_asset_path.begins_with("res://")
+		or bool(card.get_meta("asset_missing", false))
+	)
+	_asset_context_menu.set_item_disabled(0, unavailable)
+	var mouse_position := Vector2i(get_viewport().get_mouse_position().round())
+	_asset_context_menu.popup(Rect2i(mouse_position, Vector2i.ONE))
+
+
+func _on_asset_context_menu_selected(item_id: int) -> void:
+	if item_id != CONTEXT_SHOW_IN_FILESYSTEM or _context_asset_path.is_empty():
+		return
+	asset_reveal_requested.emit(_context_asset_path)
 
 
 func _build_legend_dialog() -> void:

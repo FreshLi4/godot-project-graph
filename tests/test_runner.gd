@@ -11,11 +11,19 @@ const OrganicGraphLayout = preload(
 const SemanticConnectionLayer = preload(
 	"res://addons/freshli4_project_graph/ui/semantic_connection_layer.gd"
 )
+const ProjectGraphPanel = preload(
+	"res://addons/freshli4_project_graph/ui/project_graph_panel.gd"
+)
 
 const FIXTURE_ROOT := "res://tests/fixtures"
 const ROUND_TRIP_PATH := "user://freshli4_project_graph/tests/round-trip.json"
 const CARD_SIZE := Vector2(320.0, 190.0)
 const LARGE_CARD_SIZE := Vector2(420.0, 240.0)
+const LONG_FILENAME_FIXTURE := (
+	FIXTURE_ROOT
+	+ "/this_is_a_deliberately_very_long_asset_filename_that_must_wrap_inside_a_"
+	+ "fixed_width_project_graph_card_without_showing_its_resource_path.tres"
+)
 
 var _failures := PackedStringArray()
 
@@ -42,6 +50,10 @@ func _init() -> void:
 	_expect(
 		_has_node(snapshot, "%s/shared_resource.tres" % FIXTURE_ROOT, "Resource"),
 		"shared resource",
+	)
+	_expect(
+		_has_node(snapshot, LONG_FILENAME_FIXTURE, "Resource"),
+		"long filename fixture should be scanned for fixed-width wrapping smoke",
 	)
 	_expect(
 		_has_edge(
@@ -139,6 +151,52 @@ func _init() -> void:
 		and String(inferred_style.get("semantic", "")) == "inferred_dynamic",
 		"inferred or dynamic relationships should use dashed arrows",
 	)
+	_expect(
+		ProjectGraphPanel.scroll_offset_after_drag(
+			Vector2(20.0, 30.0),
+			Vector2(10.0, -6.0),
+			2.0,
+		).is_equal_approx(Vector2(15.0, 33.0)),
+		"left-button canvas dragging should pan relative to the current zoom",
+	)
+	var route_source := Rect2(0.0, 0.0, 100.0, 60.0)
+	var route_target := Rect2(360.0, 0.0, 100.0, 60.0)
+	var route_blocker := Rect2(170.0, -30.0, 120.0, 120.0)
+	var obstacle_route := SemanticConnectionLayer.route_around_obstacles(
+		route_source,
+		route_target,
+		[route_blocker],
+	)
+	_expect(
+		obstacle_route.size() > 2,
+		"semantic edges should detour when a third-party card blocks the direct line",
+	)
+	_expect(
+		SemanticConnectionLayer.polyline_avoids_rects(
+			obstacle_route,
+			[route_blocker],
+		),
+		"semantic edge detours should preserve clearance from every blocking card",
+	)
+	var multi_blocker_route := SemanticConnectionLayer.route_around_obstacles(
+		route_source,
+		route_target,
+		[
+			Rect2(125.0, -20.0, 80.0, 95.0),
+			Rect2(250.0, -55.0, 75.0, 110.0),
+		],
+	)
+	_expect(
+		multi_blocker_route.size() > 2
+		and SemanticConnectionLayer.polyline_avoids_rects(
+			multi_blocker_route,
+			[
+				Rect2(125.0, -20.0, 80.0, 95.0),
+				Rect2(250.0, -55.0, 75.0, 110.0),
+			],
+		),
+		"visibility routing should discover secondary blockers and remain unobstructed",
+	)
 
 	var organic_snapshot := _make_organic_snapshot(8, 6, 3)
 	var organic_layout := layout.calculate(organic_snapshot, CARD_SIZE)
@@ -176,6 +234,14 @@ func _init() -> void:
 	_expect(
 		int(organic_layout.get("community_pair_count", 0)) > 0,
 		"shared neighbors should produce deterministic community attraction pairs",
+	)
+	_expect(
+		_all_snapshot_routes_avoid_cards(
+			organic_snapshot,
+			organic_positions,
+			CARD_SIZE,
+		),
+		"every organic semantic edge should route around unrelated asset cards",
 	)
 	var oversized_layout := layout.calculate(organic_snapshot, LARGE_CARD_SIZE)
 	_expect(
@@ -585,6 +651,33 @@ func _undirected_pair_key(left_id: String, right_id: String) -> String:
 		if left_id < right_id
 		else "%s|%s" % [right_id, left_id]
 	)
+
+
+func _all_snapshot_routes_avoid_cards(
+	snapshot: Dictionary,
+	positions: Dictionary,
+	card_size: Vector2,
+) -> bool:
+	for edge_value: Variant in snapshot.get("edges", []):
+		var edge := edge_value as Dictionary
+		var source_id := String(edge.get("source", ""))
+		var target_id := String(edge.get("target", ""))
+		if not positions.has(source_id) or not positions.has(target_id):
+			return false
+		var obstacles: Array = []
+		for node_id_value: Variant in positions:
+			var node_id := String(node_id_value)
+			if node_id == source_id or node_id == target_id:
+				continue
+			obstacles.append(Rect2(positions[node_id], card_size))
+		var route := SemanticConnectionLayer.route_around_obstacles(
+			Rect2(positions[source_id], card_size),
+			Rect2(positions[target_id], card_size),
+			obstacles,
+		)
+		if not SemanticConnectionLayer.polyline_avoids_rects(route, obstacles):
+			return false
+	return true
 
 
 func _fills_disk(
