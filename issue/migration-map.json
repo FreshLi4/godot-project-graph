@@ -1,0 +1,395 @@
+{
+  "history_base": "31c903505959733c2a653d1297e6d4f684f303e5",
+  "versioncontrolid": "versioncontrolid",
+  "versioncontrolid_definition": "pending",
+  "sources": [
+    {
+      "path": "REQUIREMENTS.md",
+      "sha256": "679156c98788672c6f4e893d5a891d9516f4a948f8d06ef466f45ebb13eb171b",
+      "bytes": 8056,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "2af125dd0597e7b5e37f58e493499410326f311a"
+    },
+    {
+      "path": "agent-log/20260730-012018-utcp8-taobe-gpt-5.md",
+      "sha256": "a7826ccf8650d9bf4342b007d8fa403cb969815d6db55e4e10ad13987e19c225",
+      "bytes": 4649,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "f8073314e94b8fd557555a5584bfc07c7752954f"
+    },
+    {
+      "path": "agent-log/20260730-090303-utcp8-taobe-gpt-5.md",
+      "sha256": "429476791c14ee98f81ff46b1a73080a450d02d5c07d245e1f115f53c66358c5",
+      "bytes": 4957,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "064a6a472af70033e7f6dd6861728da54be07404"
+    },
+    {
+      "path": "agent-log/20260730-171412-utcp8-taobe-gpt-5.md",
+      "sha256": "6ebd23861614d06fe91b9bbb67fee895c86bb964efbf82ada13044f88e02483f",
+      "bytes": 3762,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "2dec241b62aa622aaa69b9afdd9c7625b28fb085"
+    },
+    {
+      "path": "agent-log/20260730-210612-utcp8-taobe-gpt-5.md",
+      "sha256": "e7abe33e1f47ea7a79551c9cceaca6d77ef52903e0001aff45f0194ff43a7318",
+      "bytes": 4051,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "55642d502315fcc72db7d34d9be2e067dc040ccf"
+    },
+    {
+      "path": "agent-log/20260730-223100-utcp8-taobe-gpt-5.md",
+      "sha256": "dbc7915785fd75fe8fc8cd6054de1e521f8ad50ba2ba3f443d07756605caaf2d",
+      "bytes": 3797,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "62189cc8f77ad90f52b65eebe0c56373069cb10f"
+    },
+    {
+      "path": "agent-log/20260730-230950-utcp8-taobe-gpt-5.md",
+      "sha256": "696f33bb5328743ce8c78796d8c9aecc3c7207e548b45361b90b523b8578868a",
+      "bytes": 3880,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "29934f29eae56460c23b6229ace99e62564f0a1f"
+    },
+    {
+      "path": "agent-log/20260730-234443-utcp8-taobe-gpt-5.md",
+      "sha256": "3981d015462a57bca950dbad58a112a803745c48a6e0257b8a3f24261a23d1b3",
+      "bytes": 3206,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "60cbd2958b151aff476e117ad975d8a8e458efb5"
+    },
+    {
+      "path": "agent-log/yyyymmdd-hhmmss-utcpn-username-modelname.md",
+      "sha256": "9db235b9fd549a728cb1b0e001e5c71546212b13895ff0bdfc9fe029af4b72ae",
+      "bytes": 933,
+      "head": "31c903505959733c2a653d1297e6d4f684f303e5",
+      "tracked": true,
+      "status_before": "",
+      "blob": "6066bdafaec5c636dcd0e209f027111afaf252cf"
+    }
+  ],
+  "requirements": [
+    {
+      "path": "REQUIREMENTS.md",
+      "issues": [
+        "issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md",
+        "issue/issue-0.1.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
+        "issue/issue-0.2.0-FE-A-000-FE-project-versioncontrolid.md",
+        "issue/issue-0.3.0-DATA-A-000-DATA-scenes-relations-versioncontrolid.md",
+        "issue/issue-0.4.0-API-A-000-API-knowledge-release-plugin-versioncontrolid.md"
+      ],
+      "legacy_ids": [
+        "0.1.0-TOOL-A-000",
+        "0.1.0-TOOL-A-001",
+        "0.1.0-TOOL-A-002",
+        "0.1.0-TOOL-A-003",
+        "0.1.0-DATA-A-000",
+        "0.1.0-DATA-A-001",
+        "0.1.0-DATA-A-002",
+        "0.1.0-DATA-A-003",
+        "0.1.0-DATA-A-004",
+        "0.1.0-DATA-A-005",
+        "0.1.0-FE-A-000",
+        "0.1.0-FE-A-001",
+        "0.1.0-FE-A-002",
+        "0.1.0-FE-A-003",
+        "0.1.0-FE-A-004",
+        "0.1.0-API-A-001",
+        "0.1.0-QA-A-000",
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002",
+        "0.1.0-QA-A-003",
+        "0.1.0-DOC-A-000",
+        "0.1.0-DOC-A-001",
+        "0.1.0-DOC-A-002",
+        "0.1.0-DOC-A-003",
+        "0.1.0-DOC-A-004",
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002",
+        "0.2.0-FE-A-003",
+        "0.2.0-FE-A-004",
+        "0.2.0-FE-A-005",
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-FE-A-009",
+        "0.2.0-FE-A-010",
+        "0.2.0-FE-A-011",
+        "0.2.0-FE-A-012",
+        "0.2.0-FE-A-013",
+        "0.2.0-FE-A-014",
+        "0.2.0-FE-A-015",
+        "0.2.0-FE-A-016",
+        "0.2.0-FE-A-017",
+        "0.2.0-FE-A-018",
+        "0.2.0-FE-A-019",
+        "0.2.0-FE-A-020",
+        "0.2.0-FE-A-021",
+        "0.2.0-FE-A-022",
+        "0.2.0-FE-A-023",
+        "0.2.0-FE-A-024",
+        "0.2.0-FE-A-025",
+        "0.2.0-FE-A-026",
+        "0.2.0-FE-A-027",
+        "0.2.0-FE-A-028",
+        "0.2.0-FE-A-029",
+        "0.2.0-FE-A-030",
+        "0.2.0-FE-A-031",
+        "0.2.0-FE-A-032",
+        "0.2.0-FE-A-033",
+        "0.2.0-FE-A-034",
+        "0.2.0-FE-A-035",
+        "0.2.0-FE-A-036",
+        "0.2.0-FE-A-037",
+        "0.2.0-FE-A-038",
+        "0.2.0-FE-A-039",
+        "0.2.0-FE-A-040",
+        "0.2.0-FE-A-041",
+        "0.3.0-DATA-A-000",
+        "0.3.0-DATA-A-001",
+        "0.3.0-DATA-A-002",
+        "0.3.0-DATA-A-003",
+        "0.3.0-DATA-A-004",
+        "0.3.0-DATA-A-005",
+        "0.3.0-DATA-A-006",
+        "0.3.0-DATA-A-007",
+        "0.4.0-API-A-000",
+        "0.4.0-API-A-001",
+        "0.4.0-API-A-002",
+        "0.4.0-API-A-003",
+        "0.4.0-CI-A-000",
+        "0.4.0-CI-A-001",
+        "0.4.0-CI-A-002",
+        "0.4.0-CI-A-003"
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "path": "agent-log/20260730-171412-utcp8-taobe-gpt-5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260730-090303-utcp8-taobe-gpt-5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260730-223100-utcp8-taobe-gpt-5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.2.0-FE-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.2.0-FE-A-029",
+        "0.2.0-FE-A-030",
+        "0.2.0-FE-A-031",
+        "0.2.0-FE-A-032"
+      ]
+    },
+    {
+      "path": "agent-log/20260730-012018-utcp8-taobe-gpt-5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260730-210612-utcp8-taobe-gpt-5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260730-234443-utcp8-taobe-gpt-5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.2.0-FE-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.2.0-FE-A-038",
+        "0.2.0-FE-A-041"
+      ]
+    },
+    {
+      "path": "agent-log/yyyymmdd-hhmmss-utcpn-username-modelname.md",
+      "role": "retired-template",
+      "issues": []
+    },
+    {
+      "path": "agent-log/20260730-230950-utcp8-taobe-gpt-5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.2.0-FE-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.2.0-FE-A-033",
+        "0.2.0-FE-A-037"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "0.1.0-TOOL-A-000",
+      "type": "TOOL",
+      "file": "issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md",
+      "title": "agent/phase-1-addon: 扫描并浏览 Godot 静态资产关系",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-TOOL-A-000",
+        "0.1.0-TOOL-A-001",
+        "0.1.0-TOOL-A-002",
+        "0.1.0-TOOL-A-003",
+        "0.1.0-DATA-A-000",
+        "0.1.0-DATA-A-001",
+        "0.1.0-DATA-A-002",
+        "0.1.0-DATA-A-003",
+        "0.1.0-DATA-A-004",
+        "0.1.0-DATA-A-005",
+        "0.1.0-FE-A-000",
+        "0.1.0-FE-A-001",
+        "0.1.0-FE-A-002",
+        "0.1.0-FE-A-003",
+        "0.1.0-FE-A-004",
+        "0.1.0-API-A-001",
+        "0.1.0-QA-A-000",
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002",
+        "0.1.0-QA-A-003"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.1.0-DOC-A-000",
+      "type": "DOC",
+      "file": "issue-0.1.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
+      "title": "agent/phase-1-addon: 建立公开项目协作基础",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-DOC-A-000",
+        "0.1.0-DOC-A-001",
+        "0.1.0-DOC-A-002",
+        "0.1.0-DOC-A-003",
+        "0.1.0-DOC-A-004"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.2.0-FE-A-000",
+      "type": "FE",
+      "file": "issue-0.2.0-FE-A-000-FE-project-versioncontrolid.md",
+      "title": "graph/visualization: 提供可扩展的全项目图浏览",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002",
+        "0.2.0-FE-A-003",
+        "0.2.0-FE-A-004",
+        "0.2.0-FE-A-005",
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-FE-A-009",
+        "0.2.0-FE-A-010",
+        "0.2.0-FE-A-011",
+        "0.2.0-FE-A-012",
+        "0.2.0-FE-A-013",
+        "0.2.0-FE-A-014",
+        "0.2.0-FE-A-015",
+        "0.2.0-FE-A-016",
+        "0.2.0-FE-A-017",
+        "0.2.0-FE-A-018",
+        "0.2.0-FE-A-019",
+        "0.2.0-FE-A-020",
+        "0.2.0-FE-A-021",
+        "0.2.0-FE-A-022",
+        "0.2.0-FE-A-023",
+        "0.2.0-FE-A-024",
+        "0.2.0-FE-A-025",
+        "0.2.0-FE-A-026",
+        "0.2.0-FE-A-027",
+        "0.2.0-FE-A-028",
+        "0.2.0-FE-A-029",
+        "0.2.0-FE-A-030",
+        "0.2.0-FE-A-031",
+        "0.2.0-FE-A-032",
+        "0.2.0-FE-A-033",
+        "0.2.0-FE-A-034",
+        "0.2.0-FE-A-035",
+        "0.2.0-FE-A-036",
+        "0.2.0-FE-A-037",
+        "0.2.0-FE-A-038",
+        "0.2.0-FE-A-039",
+        "0.2.0-FE-A-040",
+        "0.2.0-FE-A-041"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）"
+    },
+    {
+      "id": "0.3.0-DATA-A-000",
+      "type": "DATA",
+      "file": "issue-0.3.0-DATA-A-000-DATA-scenes-relations-versioncontrolid.md",
+      "title": "analysis/semantic: 识别场景、脚本与动态推断关系",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-DATA-A-000",
+        "0.3.0-DATA-A-001",
+        "0.3.0-DATA-A-002",
+        "0.3.0-DATA-A-003",
+        "0.3.0-DATA-A-004",
+        "0.3.0-DATA-A-005",
+        "0.3.0-DATA-A-006",
+        "0.3.0-DATA-A-007"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）"
+    },
+    {
+      "id": "0.4.0-API-A-000",
+      "type": "API",
+      "file": "issue-0.4.0-API-A-000-API-knowledge-release-plugin-versioncontrolid.md",
+      "title": "release/distribution: 输出可复用知识并发布插件",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-API-A-000",
+        "0.4.0-API-A-001",
+        "0.4.0-API-A-002",
+        "0.4.0-API-A-003",
+        "0.4.0-CI-A-000",
+        "0.4.0-CI-A-001",
+        "0.4.0-CI-A-002",
+        "0.4.0-CI-A-003"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    }
+  ],
+  "note": "Original states retained; historical log evidence does not complete current tasks."
+}

@@ -70,11 +70,11 @@ res://generated/*.tres
 ## 进一步了解
 
 - [`AGENTS.md`](AGENTS.md)：协作规范
-- [`REQUIREMENTS.md`](REQUIREMENTS.md)：需求追踪
+- [`issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md`](issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md)：需求追踪
 - [`DESIGN.md`](DESIGN.md)：视觉规范
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)：架构与数据边界
 - [`docs/SCHEMA.md`](docs/SCHEMA.md)：图数据 Schema
-- `agent-log/`：执行日志
+- `issue/README.md`：执行日志
 
 ## 边界与限制
 

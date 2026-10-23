@@ -2,7 +2,7 @@
 
 Thanks for helping improve FreshLi4 Project Graph.
 
-Before changing code, read `AGENTS.md`, `REQUIREMENTS.md`, and `docs/ARCHITECTURE.md`. Keep the scanner independent from editor UI, avoid executing scanned project code, and add fixture coverage for behavior changes.
+Before changing code, read `AGENTS.md`, `issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md`, and `docs/ARCHITECTURE.md`. Keep the scanner independent from editor UI, avoid executing scanned project code, and add fixture coverage for behavior changes.
 
 Run both checks before opening a pull request:
 
