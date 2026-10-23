@@ -54,7 +54,7 @@ CI also copies only the addon and fixture assets into a fresh temporary Godot pr
 - The addon never instantiates scanned scenes.
 - Default exports go to `user://freshli4_project_graph/`.
 
-See [architecture](docs/ARCHITECTURE.md), [graph schema](docs/SCHEMA.md), [requirements](REQUIREMENTS.md), and [visual design](DESIGN.md).
+See [architecture](docs/ARCHITECTURE.md), [graph schema](docs/SCHEMA.md), [requirements](issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md), and [visual design](DESIGN.md).
 
 ## License
 
