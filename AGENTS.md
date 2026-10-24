@@ -53,10 +53,10 @@ template-version: "v2.0.1-261023-173015"
 
 ## Issue 维护标准
 
-1. 活动需求、任务、检查与交接统一写入当前工作副本的 `issue/`。标准路径为 `project-name/worktree(如有)/issue/issue-issueid-issuetype-issuename-versioncontrolid.md`；没有 worktree 时为 `project-name/issue/...`。`worktree(如有)` 表示已有实际工作区，不要求目录字面名为 `worktree`。
-2. 每个可执行 Issue 有稳定 `issueid`；排序、移动、改名或状态变化不改变 ID。迁移保留旧稳定 ID，拆分时保留原 ID 并关联新增子 ID。已有 ID 的原始大小写保留。
-3. 文件名中 `issuetype` 使用下节 16 类代码之一，`issuename` 使用简短、可读的英文连字符名称。`versioncontrolid` 的含义尚待用户定义，现阶段明确保留字面占位 `versioncontrolid`，不猜测为 commit、branch、Perforce change 或其他版本标识，也不为填它执行版本管理操作。
-4. `issue/issue-issueid-issuetype-issuename-versioncontrolid.md` 是唯一模板文件，不是活动任务。复制后填写真实 ID、类型和名称；正文只保留任务需要的段落，不为格式补空内容。
+1. 活动需求、任务、检查与交接统一写入当前工作副本的 `issue/`。标准路径为 `project-name/worktree(如有)/issue/issue_任务描述[_实际版本编号].md`；没有 worktree 时为 `project-name/issue/...`。`worktree(如有)` 表示已有实际工作区，不要求目录字面名为 `worktree`。
+2. 旧稳定 ID、类型和拆分关联保留在现有 properties，不进入文件名；改名不重编号或丢失追溯信息。不为命名建立新的编号体系。
+3. 命名只用具体任务描述及已核实的实际实施版本；类型留在 properties。具体描述、任务拆分、版本缺失及多提交处理见下文“Issue 文件命名与版本关联”。
+4. `issue/issue_template.md` 是唯一模板文件，不是活动任务。复制后填写具体任务和所需 properties；正文只保留任务需要的段落，不为格式补空内容。
 5. 开始实现前先搜索已有匹配 Issue。用户提出的核心行为、数据、界面、内容或可感知工程能力应落入最具体的 Issue；一次性解释或咨询不强制创建。归入已有任务或记录已授权的新任务不需要额外确认，也不意味着授权创建分支或 worktree。
 6. 正文维护当前事实：目标、范围、优先级、关联 ID、实现状态、检查结果、用户验收和当前阻塞。使用自然完整的句子、Markdown 标题、稳定 ID、少量标签和缩进 checkbox，避免复杂表格与不必要的 YAML。
 7. `## Comments` 只追加，记录用户补充、决策、行动、检查结果、交接和状态变化，附时间与作者。正文随最新结论更新；不要通过重写旧 Comment 抹掉历史，也不把已过时结论留作正文现状。纠正旧记录时追加说明，不回显敏感输入。
@@ -65,6 +65,15 @@ template-version: "v2.0.1-261023-173015"
 10. 具体测试是所属功能 Issue 的子项，可沿用 `<parent>-test` ID。QA 仍是有效类型；不要只为宣布阶段完成而制造独立 QA、验证或完成定义 Issue。Phase、工作线和父子关系按实际需要记录，不再依赖 branch 标题组织任务。
 11. 更新 Issue 时精准修改相关正文并追加 Comments，不为整理格式批量改写无关历史、删除或重编号既有 ID。每完成可交接的小步骤就更新当前状态；不额外维护一套平行需求文件或执行日志。
 12. 旧活动 `REQUIREMENTS.md` 与 `agent-log/` 在任务和有效证据迁入 Issue 后移除，不维护两套工作制度。保留旧 ID / 来源，完整历史可由已核实 Git 历史追溯；未跟踪或未提交的独有内容必须先保全到本次版本化来源副本。明确停用的模板档案继续只作历史，不把其中示例迁成真实任务。
+
+## Issue 文件命名与版本关联
+
+1. 活动文件采用 `issue_任务描述[_实际版本编号].md`。任务描述遵循源任务原语言，中文如实、连贯记录，不翻译成英语；英文任务描述内部使用连字符。描述具体对象与动作 / 目标，不能只写 search、storage 等主题桶；文件名不放类型或旧 A-001 等编号。类型及旧稳定 ID 保留在现有 properties，类型继续使用下节 16 类含义。
+2. 同一文件混装多个可独立实施 / 交付的目标时，按实际任务拆分并保留原 ID、来源、历史与真实状态。属于同一目标的实现细节、依赖和验收子项留在该任务内，不机械地逐 checkbox、逐日志创建文件。语义重名时用具体对象、范围或动作消歧，不恢复无意义编号。
+3. 实际版本必须关联该任务本身的实现：Git 使用可唯一解析的实际实施提交短 hash；Perforce 使用最终 submitted changelist 数字。不能拿当前 HEAD、需求快照、文档迁移提交或 pending change 冒充业务实现版本；文档任务本身则按其实际文档变更追溯。
+4. 尚未提交的任务或无法核实历史实施版本时，省略整个版本后缀，在现有 property 明确“尚无对应提交”或“未核实”及原因。不使用字面占位词 versioncontrolid，不为补后缀擅自提交、fetch、切分支或扩大检查范围。
+5. 一项任务对应多个真实提交时，可在 property 保存列表。文件名应取哪个版本若没有明确依据，先报告待定并保留无版本后缀，不自造范围、拼接 hash 或其他复杂格式。文件自己的记录提交不自动等于业务实现提交；不为写入自身 hash 连续追加提交或改写历史。
+6. `issue/issue_template.md` 保持明确模板身份，不填假提交 ID。正文维护当前事实，历史 Comments 仍只追加；命名修正不改变实现、检查和用户验收的真实完成度。
 
 ## Issue 类型
 
@@ -95,13 +104,12 @@ template-version: "v2.0.1-261023-173015"
    ```text
    project-name/
      issue/                     # 不使用 worktree 时
-       issue-issueid-issuetype-issuename-versioncontrolid.md
-
+       issue_任务描述[_实际版本编号].md
    project-name/
      existing-workspace/        # 使用 worktree 时，名称遵循现有约定
        AGENTS.md
        issue/
-         issue-issueid-issuetype-issuename-versioncontrolid.md
+         issue_任务描述[_实际版本编号].md
        <deliverable>/
    ```
 4. 初始化项目时选择 App 或 Game 子模板，按实际需要复制，包含适用的隐藏配置；不带入模板仓库的 `.git`、历史档案或个人 IDE 配置，不误删项目自身的 Git / CI 配置。初始化不隐含创建分支、worktree 或启用新的版本管理系统。
@@ -156,7 +164,7 @@ template-version: "v2.0.1-261023-173015"
 <!-- local-agent-template-rollout:v2.0.1-261023-173015 -->
 > 通用规则来源于本地 `DDonlien/agent-template` `v2.0.1-261023-173015`。项目自己的范围、命令和技术契约继续有效；旧模板中要求 REQUIREMENTS / agent-log 双写、例行远端同步与提交的通用制度已停用。
 >
-> 项目任务以当前工作副本根 `issue/` 为唯一工作入口，正文维护当前事实，Comments 追加历史。旧工作文档在有可追溯迁移映射和 Git 历史 / 版本化来源副本后移除；未把历史日志机械创建为新任务。`versioncontrolid` 仍为未定义占位。
+> 项目任务以当前工作副本根 `issue/` 为唯一工作入口，正文维护当前事实，Comments 追加历史。旧工作文档在有可追溯迁移映射和 Git 历史 / 版本化来源副本后移除；未把历史日志机械创建为新任务。实际实施版本只在核实后填写；尚无提交或未核实则省略文件名后缀，并在 property 说明。
 <!-- /local-agent-template-rollout -->
 
 
@@ -181,7 +189,7 @@ template-version: "v2.0.1-261023-173015"
 ### 文档入口
 
 - 项目说明：`README.md`
-- 需求追踪：`issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md`
+- 需求追踪：[注册并安全卸载原生GDScript插件入口](issue/issue_%E6%B3%A8%E5%86%8C%E5%B9%B6%E5%AE%89%E5%85%A8%E5%8D%B8%E8%BD%BD%E5%8E%9F%E7%94%9FGDScript%E6%8F%92%E4%BB%B6%E5%85%A5%E5%8F%A3.md)、[扫描Godot静态资产依赖并输出版本化图数据](issue/issue_%E6%89%AB%E6%8F%8FGodot%E9%9D%99%E6%80%81%E8%B5%84%E4%BA%A7%E4%BE%9D%E8%B5%96%E5%B9%B6%E8%BE%93%E5%87%BA%E7%89%88%E6%9C%AC%E5%8C%96%E5%9B%BE%E6%95%B0%E6%8D%AE.md)、[浏览搜索并打开资产关系图与导出JSON](issue/issue_%E6%B5%8F%E8%A7%88%E6%90%9C%E7%B4%A2%E5%B9%B6%E6%89%93%E5%BC%80%E8%B5%84%E4%BA%A7%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%AF%BC%E5%87%BAJSON.md)
 - 视觉规范：`DESIGN.md`
 - 架构与数据边界：`docs/ARCHITECTURE.md`
 - 图数据 Schema：`docs/SCHEMA.md`
@@ -214,5 +222,5 @@ template-version: "v2.0.1-261023-173015"
 
 ### 维护提示
 
-- 修改「标准内容」时，**必须**同步更新 `agent-template/app-agent-template/AGENTS.md` 与 `agent-template/game-agent-template/AGENTS.md` 的对应章节。
+- 模板规则维护是单独授权的任务；普通项目任务不自动同步、升级或回写 agent-template，不要求当前分支先与 main / mainline 对齐。只检查本次修改文件及必要依赖对应的版本管理状态；用户明确要求同步时，才按指定目标处理并保留已有改动。
 - 本文件应始终在「标准内容」原样保留的前提下，仅在「项目专用内容」追加或修改。
