@@ -1,7 +1,7 @@
 {
   "history_base": "31c903505959733c2a653d1297e6d4f684f303e5",
-  "versioncontrolid": "versioncontrolid",
-  "versioncontrolid_definition": "pending",
+  "versioncontrolid": null,
+  "versioncontrolid_definition": "task implementation Git commit hash or final submitted Perforce changelist",
   "sources": [
     {
       "path": "REQUIREMENTS.md",
@@ -89,11 +89,23 @@
     {
       "path": "REQUIREMENTS.md",
       "issues": [
-        "issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md",
-        "issue/issue-0.1.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
-        "issue/issue-0.2.0-FE-A-000-FE-project-versioncontrolid.md",
-        "issue/issue-0.3.0-DATA-A-000-DATA-scenes-relations-versioncontrolid.md",
-        "issue/issue-0.4.0-API-A-000-API-knowledge-release-plugin-versioncontrolid.md"
+        "issue/issue_注册并安全卸载原生GDScript插件入口.md",
+        "issue/issue_扫描Godot静态资产依赖并输出版本化图数据.md",
+        "issue/issue_浏览搜索并打开资产关系图与导出JSON.md",
+        "issue/issue_建立插件安装协作与架构Schema说明.md",
+        "issue/issue_在大型项目图筛选分组并浏览局部与反向依赖.md",
+        "issue/issue_以确定性有机力导向布局排列大图并保持卡片净空.md",
+        "issue/issue_在扫描与依赖解析前应用持久化项目Ignore配置.md",
+        "issue/issue_以有向语义线型表示关系并避开可见节点卡片.md",
+        "issue/issue_减少布局连线交叉并形成局部关联簇.md",
+        "issue/issue_用可选中拖动的正方形卡片显示完整文件名并支持画布平移.md",
+        "issue/issue_解析Godot场景与GDScript关系并记录推断可信度.md",
+        "issue/issue_通过可选分析器识别C#继承与动态创建.md",
+        "issue/issue_为项目图添加人工Feature-System-Concept元数据.md",
+        "issue/issue_导出供Codex与ChatGPT消费的项目图Markdown上下文.md",
+        "issue/issue_评估Web-Viewer与双向编辑器桥接.md",
+        "issue/issue_评估可选运行时采集并隔离隐私数据.md",
+        "issue/issue_打包Godot插件并准备Asset-Library发布材料.md"
       ],
       "legacy_ids": [
         "0.1.0-TOOL-A-000",
@@ -260,7 +272,7 @@
     {
       "id": "0.1.0-TOOL-A-000",
       "type": "TOOL",
-      "file": "issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md",
+      "file": "issue_注册并安全卸载原生GDScript插件入口.md",
       "title": "agent/phase-1-addon: 扫描并浏览 Godot 静态资产关系",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
@@ -285,13 +297,45 @@
         "0.1.0-QA-A-002",
         "0.1.0-QA-A-003"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "files": [
+        "issue_注册并安全卸载原生GDScript插件入口.md",
+        "issue_扫描Godot静态资产依赖并输出版本化图数据.md",
+        "issue_浏览搜索并打开资产关系图与导出JSON.md"
+      ],
+      "split_tasks": [
+        {
+          "file": "issue_注册并安全卸载原生GDScript插件入口.md",
+          "title": "注册并安全卸载原生GDScript插件入口",
+          "source_task_ids": [
+            "0.1.0-TOOL-A-000",
+            "0.1.0-QA-A-000"
+          ],
+          "state": "已完成（仅沿用本任务原始勾选；本轮未重新执行产品验收）。"
+        },
+        {
+          "file": "issue_扫描Godot静态资产依赖并输出版本化图数据.md",
+          "title": "扫描Godot静态资产依赖并输出版本化图数据",
+          "source_task_ids": [
+            "0.1.0-DATA-A-000"
+          ],
+          "state": "已完成（仅沿用本任务原始勾选；本轮未重新执行产品验收）。"
+        },
+        {
+          "file": "issue_浏览搜索并打开资产关系图与导出JSON.md",
+          "title": "浏览搜索并打开资产关系图与导出JSON",
+          "source_task_ids": [
+            "0.1.0-FE-A-000"
+          ],
+          "state": "已完成（仅沿用本任务原始勾选；本轮未重新执行产品验收）。"
+        }
+      ]
     },
     {
       "id": "0.1.0-DOC-A-000",
       "type": "DOC",
-      "file": "issue-0.1.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
-      "title": "agent/phase-1-addon: 建立公开项目协作基础",
+      "file": "issue_建立插件安装协作与架构Schema说明.md",
+      "title": "建立插件安装协作与架构Schema说明",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-DOC-A-000",
@@ -305,7 +349,7 @@
     {
       "id": "0.2.0-FE-A-000",
       "type": "FE",
-      "file": "issue-0.2.0-FE-A-000-FE-project-versioncontrolid.md",
+      "file": "issue_在大型项目图筛选分组并浏览局部与反向依赖.md",
       "title": "graph/visualization: 提供可扩展的全项目图浏览",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
@@ -352,12 +396,105 @@
         "0.2.0-FE-A-040",
         "0.2.0-FE-A-041"
       ],
-      "state": "进行中（原文同时包含已完成与未完成项）"
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "files": [
+        "issue_在大型项目图筛选分组并浏览局部与反向依赖.md",
+        "issue_以确定性有机力导向布局排列大图并保持卡片净空.md",
+        "issue_在扫描与依赖解析前应用持久化项目Ignore配置.md",
+        "issue_以有向语义线型表示关系并避开可见节点卡片.md",
+        "issue_减少布局连线交叉并形成局部关联簇.md",
+        "issue_用可选中拖动的正方形卡片显示完整文件名并支持画布平移.md"
+      ],
+      "split_tasks": [
+        {
+          "file": "issue_在大型项目图筛选分组并浏览局部与反向依赖.md",
+          "title": "在大型项目图筛选分组并浏览局部与反向依赖",
+          "source_task_ids": [
+            "0.2.0-FE-A-001",
+            "0.2.0-FE-A-002",
+            "0.2.0-FE-A-003",
+            "0.2.0-FE-A-005"
+          ],
+          "state": "待处理（本任务原文未完成项保持未勾选；取消、阻塞和延后标记照录）。"
+        },
+        {
+          "file": "issue_以确定性有机力导向布局排列大图并保持卡片净空.md",
+          "title": "以确定性有机力导向布局排列大图并保持卡片净空",
+          "source_task_ids": [
+            "0.2.0-FE-A-004",
+            "0.2.0-FE-A-006",
+            "0.2.0-FE-A-007",
+            "0.2.0-FE-A-008",
+            "0.2.0-FE-A-009",
+            "0.2.0-FE-A-013",
+            "0.2.0-FE-A-014",
+            "0.2.0-FE-A-015",
+            "0.2.0-FE-A-016",
+            "0.2.0-FE-A-017",
+            "0.2.0-FE-A-018",
+            "0.2.0-FE-A-019",
+            "0.2.0-FE-A-020",
+            "0.2.0-FE-A-021"
+          ],
+          "state": "进行中（本任务原文同时包含已完成与未完成项；未由历史日志新增完成勾选）。"
+        },
+        {
+          "file": "issue_在扫描与依赖解析前应用持久化项目Ignore配置.md",
+          "title": "在扫描与依赖解析前应用持久化项目Ignore配置",
+          "source_task_ids": [
+            "0.2.0-FE-A-010",
+            "0.2.0-FE-A-011",
+            "0.2.0-FE-A-012"
+          ],
+          "state": "已完成（仅沿用本任务原始勾选；本轮未重新执行产品验收）。"
+        },
+        {
+          "file": "issue_以有向语义线型表示关系并避开可见节点卡片.md",
+          "title": "以有向语义线型表示关系并避开可见节点卡片",
+          "source_task_ids": [
+            "0.2.0-FE-A-022",
+            "0.2.0-FE-A-023",
+            "0.2.0-FE-A-024",
+            "0.2.0-FE-A-027",
+            "0.2.0-FE-A-028",
+            "0.2.0-FE-A-036",
+            "0.2.0-FE-A-037"
+          ],
+          "state": "已完成（仅沿用本任务原始勾选；本轮未重新执行产品验收）。"
+        },
+        {
+          "file": "issue_减少布局连线交叉并形成局部关联簇.md",
+          "title": "减少布局连线交叉并形成局部关联簇",
+          "source_task_ids": [
+            "0.2.0-FE-A-029",
+            "0.2.0-FE-A-030",
+            "0.2.0-FE-A-031",
+            "0.2.0-FE-A-032"
+          ],
+          "state": "已完成（仅沿用本任务原始勾选；本轮未重新执行产品验收）。"
+        },
+        {
+          "file": "issue_用可选中拖动的正方形卡片显示完整文件名并支持画布平移.md",
+          "title": "用可选中拖动的正方形卡片显示完整文件名并支持画布平移",
+          "source_task_ids": [
+            "0.2.0-FE-A-025",
+            "0.2.0-FE-A-026",
+            "0.2.0-FE-A-033",
+            "0.2.0-FE-A-034",
+            "0.2.0-FE-A-035",
+            "0.2.0-FE-A-038",
+            "0.2.0-FE-A-039",
+            "0.2.0-FE-A-040",
+            "0.2.0-FE-A-041"
+          ],
+          "state": "进行中（本任务原文同时包含已完成与未完成项；未由历史日志新增完成勾选）。"
+        }
+      ]
     },
     {
       "id": "0.3.0-DATA-A-000",
       "type": "DATA",
-      "file": "issue-0.3.0-DATA-A-000-DATA-scenes-relations-versioncontrolid.md",
+      "file": "issue_解析Godot场景与GDScript关系并记录推断可信度.md",
       "title": "analysis/semantic: 识别场景、脚本与动态推断关系",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
@@ -370,12 +507,47 @@
         "0.3.0-DATA-A-006",
         "0.3.0-DATA-A-007"
       ],
-      "state": "进行中（原文同时包含已完成与未完成项）"
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "files": [
+        "issue_解析Godot场景与GDScript关系并记录推断可信度.md",
+        "issue_通过可选分析器识别C#继承与动态创建.md",
+        "issue_为项目图添加人工Feature-System-Concept元数据.md"
+      ],
+      "split_tasks": [
+        {
+          "file": "issue_解析Godot场景与GDScript关系并记录推断可信度.md",
+          "title": "解析Godot场景与GDScript关系并记录推断可信度",
+          "source_task_ids": [
+            "0.3.0-DATA-A-001",
+            "0.3.0-DATA-A-002",
+            "0.3.0-DATA-A-003",
+            "0.3.0-DATA-A-005",
+            "0.3.0-DATA-A-007"
+          ],
+          "state": "进行中（本任务原文同时包含已完成与未完成项；未由历史日志新增完成勾选）。"
+        },
+        {
+          "file": "issue_通过可选分析器识别C#继承与动态创建.md",
+          "title": "通过可选分析器识别C#继承与动态创建",
+          "source_task_ids": [
+            "0.3.0-DATA-A-004"
+          ],
+          "state": "待处理（本任务原文未完成项保持未勾选；取消、阻塞和延后标记照录）。"
+        },
+        {
+          "file": "issue_为项目图添加人工Feature-System-Concept元数据.md",
+          "title": "为项目图添加人工Feature-System-Concept元数据",
+          "source_task_ids": [
+            "0.3.0-DATA-A-006"
+          ],
+          "state": "待处理（本任务原文未完成项保持未勾选；取消、阻塞和延后标记照录）。"
+        }
+      ]
     },
     {
       "id": "0.4.0-API-A-000",
       "type": "API",
-      "file": "issue-0.4.0-API-A-000-API-knowledge-release-plugin-versioncontrolid.md",
+      "file": "issue_导出供Codex与ChatGPT消费的项目图Markdown上下文.md",
       "title": "release/distribution: 输出可复用知识并发布插件",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
@@ -388,8 +560,102 @@
         "0.4.0-CI-A-002",
         "0.4.0-CI-A-003"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "files": [
+        "issue_导出供Codex与ChatGPT消费的项目图Markdown上下文.md",
+        "issue_评估Web-Viewer与双向编辑器桥接.md",
+        "issue_评估可选运行时采集并隔离隐私数据.md",
+        "issue_打包Godot插件并准备Asset-Library发布材料.md"
+      ],
+      "split_tasks": [
+        {
+          "file": "issue_导出供Codex与ChatGPT消费的项目图Markdown上下文.md",
+          "title": "导出供Codex与ChatGPT消费的项目图Markdown上下文",
+          "source_task_ids": [
+            "0.4.0-API-A-001"
+          ],
+          "state": "待处理（本任务原文未完成项保持未勾选；取消、阻塞和延后标记照录）。"
+        },
+        {
+          "file": "issue_评估Web-Viewer与双向编辑器桥接.md",
+          "title": "评估Web-Viewer与双向编辑器桥接",
+          "source_task_ids": [
+            "0.4.0-API-A-002"
+          ],
+          "state": "待处理（本任务原文未完成项保持未勾选；取消、阻塞和延后标记照录）。"
+        },
+        {
+          "file": "issue_评估可选运行时采集并隔离隐私数据.md",
+          "title": "评估可选运行时采集并隔离隐私数据",
+          "source_task_ids": [
+            "0.4.0-API-A-003"
+          ],
+          "state": "待处理（本任务原文未完成项保持未勾选；取消、阻塞和延后标记照录）。"
+        },
+        {
+          "file": "issue_打包Godot插件并准备Asset-Library发布材料.md",
+          "title": "打包Godot插件并准备Asset-Library发布材料",
+          "source_task_ids": [
+            "0.4.0-CI-A-000"
+          ],
+          "state": "待处理（本任务原文未完成项保持未勾选；取消、阻塞和延后标记照录）。"
+        }
+      ]
     }
   ],
-  "note": "Original states retained; historical log evidence does not complete current tasks."
+  "note": "Original states retained; historical log evidence does not complete current tasks.",
+  "versioncontrolid_status": "unverified implementation versions explicitly recorded per issue and omitted from filenames",
+  "naming_corrections": [
+    {
+      "time": "2026-10-24 06:07:34 UTC",
+      "old_to_current_files": {
+        "issue/issue-template.md": "issue/issue_template.md"
+      },
+      "new_format": "issue-specific-task-description[-verified-implementation-version].md",
+      "batch": "final-underscore-rules"
+    },
+    {
+      "time": "2026-10-24 06:30:10 UTC",
+      "old_to_current_files": {
+        "issue/issue-DOC-migration-20261023-DOC-migrate-project-workflow-versioncontrolid.md": "issue/issue_迁移项目任务与协作记录_d3f97ec1.md"
+      },
+      "new_format": "issue-specific-task-description[-verified-implementation-version].md",
+      "batch": "native-document-records"
+    },
+    {
+      "time": "2026-10-24 07:16:26 UTC",
+      "batch": "group-f-8",
+      "old_to_current_files": {
+        "issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md": [
+          "issue/issue_注册并安全卸载原生GDScript插件入口.md",
+          "issue/issue_扫描Godot静态资产依赖并输出版本化图数据.md",
+          "issue/issue_浏览搜索并打开资产关系图与导出JSON.md"
+        ],
+        "issue/issue-0.1.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md": [
+          "issue/issue_建立插件安装协作与架构Schema说明.md"
+        ],
+        "issue/issue-0.2.0-FE-A-000-FE-project-versioncontrolid.md": [
+          "issue/issue_在大型项目图筛选分组并浏览局部与反向依赖.md",
+          "issue/issue_以确定性有机力导向布局排列大图并保持卡片净空.md",
+          "issue/issue_在扫描与依赖解析前应用持久化项目Ignore配置.md",
+          "issue/issue_以有向语义线型表示关系并避开可见节点卡片.md",
+          "issue/issue_减少布局连线交叉并形成局部关联簇.md",
+          "issue/issue_用可选中拖动的正方形卡片显示完整文件名并支持画布平移.md"
+        ],
+        "issue/issue-0.3.0-DATA-A-000-DATA-scenes-relations-versioncontrolid.md": [
+          "issue/issue_解析Godot场景与GDScript关系并记录推断可信度.md",
+          "issue/issue_通过可选分析器识别C#继承与动态创建.md",
+          "issue/issue_为项目图添加人工Feature-System-Concept元数据.md"
+        ],
+        "issue/issue-0.4.0-API-A-000-API-knowledge-release-plugin-versioncontrolid.md": [
+          "issue/issue_导出供Codex与ChatGPT消费的项目图Markdown上下文.md",
+          "issue/issue_评估Web-Viewer与双向编辑器桥接.md",
+          "issue/issue_评估可选运行时采集并隔离隐私数据.md",
+          "issue/issue_打包Godot插件并准备Asset-Library发布材料.md"
+        ]
+      },
+      "format": "issue_任务描述[_实际版本编号].md",
+      "history_policy": "source Comments kept once in primary task; siblings link to primary"
+    }
+  ]
 }
