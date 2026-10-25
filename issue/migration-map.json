@@ -343,7 +343,7 @@
     {
       "time": "2026-10-24 06:30:10 UTC",
       "old_to_current_files": {
-        "issue/issue-DOC-migration-20261023-DOC-migrate-project-workflow-versioncontrolid.md": "issue/issue_迁移项目任务与协作记录_56e7a538.md"
+        "issue/issue-DOC-migration-20261023-DOC-migrate-project-workflow-versioncontrolid.md": "issue/issue_迁移项目任务与协作记录.md"
       },
       "new_format": "issue-specific-task-description[-verified-implementation-version].md",
       "batch": "native-document-records"
