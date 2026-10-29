@@ -14,3 +14,7 @@ build/
 dist/
 release/
 exports/
+
+# .NET intermediates
+bin/
+obj/

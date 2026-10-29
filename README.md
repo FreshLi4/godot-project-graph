@@ -1,6 +1,6 @@
 # FreshLi4 Project Graph
 
-> A native GDScript project knowledge graph addon for Godot 4.
+> A native C# project knowledge graph addon for Godot 4.7 .NET.
 
 FreshLi4 Project Graph scans a Godot project without instantiating scenes or executing project scripts. It turns resource dependencies into a typed graph that can be searched, opened in the editor, and exported as versioned JSON.
 
@@ -25,13 +25,13 @@ FreshLi4 Project Graph scans a Godot project without instantiating scenes or exe
 
 ## 快速开始
 
-复制到你的 Godot 项目中：
+使用 Godot 4.7 .NET 与 .NET 8 SDK。将以下目录复制到已有 C# Godot 项目中：
 
 ```text
 addons/freshli4_project_graph/
 ```
 
-在 **Project > Project Settings > Plugins** 中启用 **FreshLi4 Project Graph**，工作区会出现 **Project Graph** 按钮。
+先编译目标项目的 C# 工程，再在 **Project > Project Settings > Plugins** 中启用 **FreshLi4 Project Graph**，工作区会出现 **Project Graph** 按钮。
 
 ## 使用
 
@@ -54,23 +54,26 @@ res://generated/*.tres
 
 ## 开发
 
-把本仓库作为 Godot 项目打开：
+把本仓库作为 Godot .NET 项目打开；原有标准版 Godot 无法运行该 C# 插件。`tests/fixtures/*.gd` 仅作为扫描语法样本，测试执行入口是 C#：
 
 ```bash
+# 编译 C#
+dotnet build ProjectGraph.csproj
+
 # 启动编辑器
 "${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --editor --path .
 
 # 运行测试
-"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --path . --script tests/test_runner.gd
+"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --path . res://tests/test_runner.tscn
 
 # 插件 smoke
-"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --editor --path . --quit-after 120 -- --project-graph-smoke
+"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --editor --path . --quit-after 600 -- --project-graph-smoke
 ```
 
 ## 进一步了解
 
 - [`AGENTS.md`](AGENTS.md)：协作规范
-- [注册并安全卸载原生GDScript插件入口](issue/issue_%E6%B3%A8%E5%86%8C%E5%B9%B6%E5%AE%89%E5%85%A8%E5%8D%B8%E8%BD%BD%E5%8E%9F%E7%94%9FGDScript%E6%8F%92%E4%BB%B6%E5%85%A5%E5%8F%A3.md)、[扫描Godot静态资产依赖并输出版本化图数据](issue/issue_%E6%89%AB%E6%8F%8FGodot%E9%9D%99%E6%80%81%E8%B5%84%E4%BA%A7%E4%BE%9D%E8%B5%96%E5%B9%B6%E8%BE%93%E5%87%BA%E7%89%88%E6%9C%AC%E5%8C%96%E5%9B%BE%E6%95%B0%E6%8D%AE.md)、[浏览搜索并打开资产关系图与导出JSON](issue/issue_%E6%B5%8F%E8%A7%88%E6%90%9C%E7%B4%A2%E5%B9%B6%E6%89%93%E5%BC%80%E8%B5%84%E4%BA%A7%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%AF%BC%E5%87%BAJSON.md)：需求追踪
+- [Project Graph编辑器插件](issue/issue_Project-Graph%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6.md)、[扫描Godot静态资产依赖并输出版本化图数据](issue/issue_%E6%89%AB%E6%8F%8FGodot%E9%9D%99%E6%80%81%E8%B5%84%E4%BA%A7%E4%BE%9D%E8%B5%96%E5%B9%B6%E8%BE%93%E5%87%BA%E7%89%88%E6%9C%AC%E5%8C%96%E5%9B%BE%E6%95%B0%E6%8D%AE.md)、[浏览搜索并打开资产关系图与导出JSON](issue/issue_%E6%B5%8F%E8%A7%88%E6%90%9C%E7%B4%A2%E5%B9%B6%E6%89%93%E5%BC%80%E8%B5%84%E4%BA%A7%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%AF%BC%E5%87%BAJSON.md)：需求追踪
 - [`DESIGN.md`](DESIGN.md)：视觉规范
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)：架构与数据边界
 - [`docs/SCHEMA.md`](docs/SCHEMA.md)：图数据 Schema
@@ -84,7 +87,7 @@ res://generated/*.tres
 - 节点避障是硬约束；边与边的零交叉不对任意非平面图作保证。
 - 扫描器不实例化用户场景，也不执行用户脚本。
 - Ignore 规则在目录遍历和依赖收集前生效。
-- Addon 不依赖 .NET、Node.js、Tauri、浏览器或数据库。
+- Addon 需要 Godot .NET 与 .NET 8 SDK；不依赖 Node.js、Tauri、浏览器或数据库。
 - 导出默认写入 `user://freshli4_project_graph/`。
 
 ## License

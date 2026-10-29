@@ -6,7 +6,7 @@
 - [本轮迁移记录](issue_%E8%BF%81%E7%A7%BB%E9%A1%B9%E7%9B%AE%E4%BB%BB%E5%8A%A1%E4%B8%8E%E5%8D%8F%E4%BD%9C%E8%AE%B0%E5%BD%95.md)
 - [旧路径与来源映射](migration-map.json)
 
-- [注册并安全卸载原生GDScript插件入口](issue_%E6%B3%A8%E5%86%8C%E5%B9%B6%E5%AE%89%E5%85%A8%E5%8D%B8%E8%BD%BD%E5%8E%9F%E7%94%9FGDScript%E6%8F%92%E4%BB%B6%E5%85%A5%E5%8F%A3.md)、[扫描Godot静态资产依赖并输出版本化图数据](issue_%E6%89%AB%E6%8F%8FGodot%E9%9D%99%E6%80%81%E8%B5%84%E4%BA%A7%E4%BE%9D%E8%B5%96%E5%B9%B6%E8%BE%93%E5%87%BA%E7%89%88%E6%9C%AC%E5%8C%96%E5%9B%BE%E6%95%B0%E6%8D%AE.md)、[浏览搜索并打开资产关系图与导出JSON](issue_%E6%B5%8F%E8%A7%88%E6%90%9C%E7%B4%A2%E5%B9%B6%E6%89%93%E5%BC%80%E8%B5%84%E4%BA%A7%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%AF%BC%E5%87%BAJSON.md) — `0.1.0-TOOL-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [Project Graph编辑器插件](issue_Project-Graph%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6.md)、[扫描Godot静态资产依赖并输出版本化图数据](issue_%E6%89%AB%E6%8F%8FGodot%E9%9D%99%E6%80%81%E8%B5%84%E4%BA%A7%E4%BE%9D%E8%B5%96%E5%B9%B6%E8%BE%93%E5%87%BA%E7%89%88%E6%9C%AC%E5%8C%96%E5%9B%BE%E6%95%B0%E6%8D%AE.md)、[浏览搜索并打开资产关系图与导出JSON](issue_%E6%B5%8F%E8%A7%88%E6%90%9C%E7%B4%A2%E5%B9%B6%E6%89%93%E5%BC%80%E8%B5%84%E4%BA%A7%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%AF%BC%E5%87%BAJSON.md) — `0.1.0-TOOL-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
 - [agent/phase-1-addon: 建立公开项目协作基础](issue_%E5%BB%BA%E7%AB%8B%E6%8F%92%E4%BB%B6%E5%AE%89%E8%A3%85%E5%8D%8F%E4%BD%9C%E4%B8%8E%E6%9E%B6%E6%9E%84Schema%E8%AF%B4%E6%98%8E.md) — `0.1.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 

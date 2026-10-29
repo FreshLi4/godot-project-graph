@@ -25,16 +25,18 @@ EditorPlugin
             +-- ScanIgnoreSettings
 ```
 
+The addon and test runner use C# on Godot 4.7 .NET / .NET 8. Editor-only plugin/panel/test code is guarded by `TOOLS`, so copied addon sources also compile for game exports. GDScript files under `tests/fixtures/` are non-executed parser samples, not implementation scripts.
+
 ## Module boundaries
 
-- `plugin.gd` owns editor lifecycle and asset navigation.
-- `ui/project_graph_panel.gd` owns user interaction and rendering, but not scanning rules.
-- `ui/semantic_connection_layer.gd` renders per-edge arrows, colors, and solid/dashed confidence semantics behind fixed-size cards.
-- `core/project_graph_scanner.gd` produces a complete in-memory snapshot and has no editor UI dependency. It combines exact `ResourceLoader` references with non-executing GDScript declaration parsing.
-- `core/organic_graph_layout.gd` converts a snapshot into deterministic, disk-filling force-directed positions without depending on `GraphEdit`.
-- `core/scan_ignore_settings.gd` persists project-local custom patterns under `user://`; default exclusions remain scanner invariants.
-- `core/graph_schema.gd` constructs and validates versioned nodes, edges, statistics, and snapshots.
-- `core/graph_store.gd` owns JSON persistence.
+- `ProjectGraphPlugin.cs` owns editor lifecycle and asset navigation.
+- `ui/ProjectGraphPanel.cs` owns user interaction and rendering, but not scanning rules.
+- `ui/SemanticConnectionLayer.cs` renders per-edge arrows, colors, and solid/dashed confidence semantics behind fixed-size cards.
+- `core/ProjectGraphScanner.cs` produces a complete in-memory snapshot and has no editor UI dependency. It combines exact `ResourceLoader` references with non-executing GDScript declaration parsing.
+- `core/OrganicGraphLayout.cs` converts a snapshot into deterministic, disk-filling force-directed positions without depending on `GraphEdit`.
+- `core/ScanIgnoreSettings.cs` persists project-local custom patterns under `user://`; default exclusions remain scanner invariants.
+- `core/GraphSchema.cs` constructs and validates versioned nodes, edges, statistics, and snapshots.
+- `core/GraphStore.cs` owns JSON persistence.
 
 The UI consumes only a snapshot dictionary. Future renderers can replace `GraphEdit` without changing scanners or the JSON contract.
 
@@ -76,7 +78,7 @@ The result is reproducible for the same snapshot and does not run an idle physic
 - otherwise the renderer incrementally builds a rectangle-corner visibility graph, discovers secondary blockers, and chooses the shortest verified polyline. Every accepted segment is checked against all visible card rectangles, so edge/card avoidance is a hard constraint rather than a layout preference;
 - routes are cached in graph coordinates and invalidated after node movement or filtering, while pan/zoom only transforms the cached points for drawing.
 
-Cards retain canonical `res://` paths as metadata for search and navigation, but display only the complete filename and asset type. The filename is a non-scrolling, arbitrarily wrapped Label with at least three lines of vertical space; the type is a `42 px` bottom strip. Both content controls ignore mouse input so the GraphNode remains explicitly selectable and draggable. Right-click emits a navigation request to `plugin.gd`, which calls Godot's editor-only `EditorInterface.select_file()` API to reveal the asset in the native FileSystem Dock.
+Cards retain canonical `res://` paths as metadata for search and navigation, but display only the complete filename and asset type. The filename is a non-scrolling, arbitrarily wrapped Label with at least three lines of vertical space; the type is a `42 px` bottom strip. Both content controls ignore mouse input so the GraphNode remains explicitly selectable and draggable. Right-click emits a navigation request to `ProjectGraphPlugin.cs`, which calls Godot's editor-only `EditorInterface.Singleton.SelectFile()` API to reveal the asset in the native FileSystem Dock.
 
 The scanner never executes GDScript. Its inheritance pass reads declarations only, resolves `extends "res://..."`, relative script paths, `preload`/`load`, and project `class_name` declarations, and replaces the less-specific ResourceLoader reference to the same parent with one exact `inherits` edge.
 
@@ -85,7 +87,7 @@ The scanner never executes GDScript. Its inheritance pass reads declarations onl
 - Obsidian's official Graph View documentation exposes center, repel, link, and link-distance forces; it does not publish the core implementation.
 - Obsidian's official release repository explicitly states that the application is not open source, so this addon does not copy or reverse-engineer its graph code.
 - D3 Force documents deterministic phyllotaxis initialization plus link, many-body, centering, and collision forces.
-- The ForceAtlas2 paper defines linear attraction, degree-weighted repulsion, gravity, overlap prevention, and Barnes–Hut scaling. This implementation adapts those published principles to fixed-step GDScript rather than reproducing Gephi code.
+- The ForceAtlas2 paper defines linear attraction, degree-weighted repulsion, gravity, overlap prevention, and Barnes–Hut scaling. This implementation adapts those published principles to fixed-step C# rather than reproducing Gephi code.
 - ForceAtlas2 and LinLog describe structural communities as local visual density. The shared-neighbor attraction adapts that goal without introducing a separate runtime or full modularity solver.
 - Stress-Plus-X shows that stress/neighborhood preservation and edge crossings need to be optimized together. The bounded angular-swap stage is a lightweight deterministic heuristic for that multi-criterion objective; it is not a full SPX solver.
 - Graphviz `neato` and `sfdp` provide additional public references for spring-model and scalable force-directed layouts.

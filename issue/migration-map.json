@@ -89,7 +89,7 @@
     {
       "path": "REQUIREMENTS.md",
       "issues": [
-        "issue/issue_注册并安全卸载原生GDScript插件入口.md",
+        "issue/issue_Project-Graph编辑器插件.md",
         "issue/issue_扫描Godot静态资产依赖并输出版本化图数据.md",
         "issue/issue_浏览搜索并打开资产关系图与导出JSON.md",
         "issue/issue_建立插件安装协作与架构Schema说明.md",
@@ -272,7 +272,7 @@
     {
       "id": "0.1.0-TOOL-A-000",
       "type": "TOOL",
-      "file": "issue_注册并安全卸载原生GDScript插件入口.md",
+      "file": "issue_Project-Graph编辑器插件.md",
       "title": "agent/phase-1-addon: 扫描并浏览 Godot 静态资产关系",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
@@ -299,13 +299,13 @@
       ],
       "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
       "files": [
-        "issue_注册并安全卸载原生GDScript插件入口.md",
+        "issue_Project-Graph编辑器插件.md",
         "issue_扫描Godot静态资产依赖并输出版本化图数据.md",
         "issue_浏览搜索并打开资产关系图与导出JSON.md"
       ],
       "split_tasks": [
         {
-          "file": "issue_注册并安全卸载原生GDScript插件入口.md",
+          "file": "issue_Project-Graph编辑器插件.md",
           "title": "注册并安全卸载原生GDScript插件入口",
           "source_task_ids": [
             "0.1.0-TOOL-A-000",
@@ -627,7 +627,7 @@
       "batch": "group-f-8",
       "old_to_current_files": {
         "issue/issue-0.1.0-TOOL-A-000-TOOL-godot-assets-relations-versioncontrolid.md": [
-          "issue/issue_注册并安全卸载原生GDScript插件入口.md",
+          "issue/issue_Project-Graph编辑器插件.md",
           "issue/issue_扫描Godot静态资产依赖并输出版本化图数据.md",
           "issue/issue_浏览搜索并打开资产关系图与导出JSON.md"
         ],
@@ -657,5 +657,8 @@
       "format": "issue_任务描述[_实际版本编号].md",
       "history_policy": "source Comments kept once in primary task; siblings link to primary"
     }
-  ]
+  ],
+  "current_path_aliases": {
+    "issue_注册并安全卸载原生GDScript插件入口.md": "issue_Project-Graph编辑器插件.md"
+  }
 }

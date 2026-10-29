@@ -197,20 +197,25 @@ template-version: "v2.0.6-261028-082046"
 - 主要用户：维护中大型 Godot 4 项目的开发者、技术美术与 AI 辅助开发团队。
 - 当前阶段：公开 MVP。
 
+### Godot 脚本语言
+
+- 使用 Godot 的项目，除非用户明确特别要求其他语言，否则自有运行逻辑、编辑器工具、Godot 导入与生成脚本、自动测试一律使用 C#，并使用 Godot .NET。原型、首阶段与实现便利不能作为改用 GDScript 的理由。
+- `tests/fixtures/*.gd` 是被扫描的语法样本，用于验证 `class_name` / `extends` 识别；不是插件或测试执行逻辑，扫描器不得执行这些样本。第三方原件、着色器与原生资源配置保持原格式。
+
 ### 技术栈与命令
 
-- 技术栈：Godot 4.4+、纯 GDScript、`EditorPlugin`、`GraphEdit`、JSON Schema v1。
+- 技术栈：Godot 4.7 .NET、C# / .NET 8、`EditorPlugin`、`GraphEdit`、JSON Schema v1。
 - 入口：用 Godot 打开 `project.godot`；可通过 `GODOT_BIN` 覆盖可执行文件。
 - 开发：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --editor --path .`
-- 测试：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --path . --script tests/test_runner.gd`
-- 插件 smoke：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --editor --path . --quit-after 120 -- --project-graph-smoke`
-- 构建：GDScript 由 Godot 加载，无需编译。
+- 测试：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --path . res://tests/test_runner.tscn`
+- 插件 smoke：`"${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}" --headless --editor --path . --quit-after 600 -- --project-graph-smoke`
+- 构建：`dotnet build ProjectGraph.csproj`；先编译再打开编辑器或运行检查。
 - 打包：发布时只打包 `addons/freshli4_project_graph/`。
 
 ### 文档入口
 
 - [`README.md`](README.md) — 项目说明
-- [注册并安全卸载原生GDScript插件入口](issue/issue_%E6%B3%A8%E5%86%8C%E5%B9%B6%E5%AE%89%E5%85%A8%E5%8D%B8%E8%BD%BD%E5%8E%9F%E7%94%9FGDScript%E6%8F%92%E4%BB%B6%E5%85%A5%E5%8F%A3.md)、[扫描Godot静态资产依赖并输出版本化图数据](issue/issue_%E6%89%AB%E6%8F%8FGodot%E9%9D%99%E6%80%81%E8%B5%84%E4%BA%A7%E4%BE%9D%E8%B5%96%E5%B9%B6%E8%BE%93%E5%87%BA%E7%89%88%E6%9C%AC%E5%8C%96%E5%9B%BE%E6%95%B0%E6%8D%AE.md)、[浏览搜索并打开资产关系图与导出JSON](issue/issue_%E6%B5%8F%E8%A7%88%E6%90%9C%E7%B4%A2%E5%B9%B6%E6%89%93%E5%BC%80%E8%B5%84%E4%BA%A7%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%AF%BC%E5%87%BAJSON.md) — 需求追踪
+- [Project Graph编辑器插件](issue/issue_Project-Graph%E7%BC%96%E8%BE%91%E5%99%A8%E6%8F%92%E4%BB%B6.md)、[扫描Godot静态资产依赖并输出版本化图数据](issue/issue_%E6%89%AB%E6%8F%8FGodot%E9%9D%99%E6%80%81%E8%B5%84%E4%BA%A7%E4%BE%9D%E8%B5%96%E5%B9%B6%E8%BE%93%E5%87%BA%E7%89%88%E6%9C%AC%E5%8C%96%E5%9B%BE%E6%95%B0%E6%8D%AE.md)、[浏览搜索并打开资产关系图与导出JSON](issue/issue_%E6%B5%8F%E8%A7%88%E6%90%9C%E7%B4%A2%E5%B9%B6%E6%89%93%E5%BC%80%E8%B5%84%E4%BA%A7%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%AF%BC%E5%87%BAJSON.md) — 需求追踪
 - [`DESIGN.md`](DESIGN.md) — 视觉规范
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — 架构与数据边界
 - [`docs/SCHEMA.md`](docs/SCHEMA.md) — 图数据 Schema
@@ -222,7 +227,7 @@ template-version: "v2.0.6-261028-082046"
 - `addons/freshli4_project_graph/core/` — 扫描、Ignore、有机力导向布局、Schema 与 JSON 持久化，不依赖编辑器 UI。
 - `addons/freshli4_project_graph/ui/` — 编辑器主界面与基础图视图。
 - `tests/fixtures/` — 扫描器测试使用的最小 Godot 资产。
-- `tests/test_runner.gd` — 无头测试入口。
+- `tests/test_runner.tscn` — 无头测试入口。
 - `docs/` — 架构与 Schema 文档。
 - `issue/README.md` — 当前工作区执行日志。
 - `.github/workflows/` — CI。
@@ -233,7 +238,7 @@ template-version: "v2.0.6-261028-082046"
 
 ### App 类型补充约束
 
-- Addon 核心保持纯 GDScript，不要求用户安装 .NET、Node.js、Tauri、浏览器运行时或数据库。
+- Addon 核心使用 Godot .NET / C#，需要 Godot .NET 编辑器与 .NET 8 SDK；不要求 Node.js、Tauri、浏览器运行时或数据库。
 - 默认不扫描整个 `res://addons/`、Godot 生成目录和 `res://` 之外的引擎资源，避免图谱被工具实现污染。
 - 自定义 Ignore 配置保存在 `user://freshli4_project_graph/`，并在目录遍历与依赖解析阶段同时生效。
 - 扫描器不得实例化用户场景或执行用户脚本；只使用文件枚举与 `ResourceLoader` 依赖信息。

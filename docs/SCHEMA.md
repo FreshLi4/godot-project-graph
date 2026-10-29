@@ -61,3 +61,7 @@ Schema-compatible analyzers may add `contains`, `instantiates`, `creates`, and `
 - A node ID is the canonical `res://` path in Phase 1.
 - Edge IDs are deterministic and unique within a snapshot.
 - Breaking changes require a new `schema_version`.
+
+## C# implementation
+
+The C# migration preserves JSON Schema v1, asset IDs, relation directions, confidence, origin strings and deterministic edge IDs. `GraphSchema`, `ProjectGraphScanner.ScanProject`, and `GraphStore.SaveJson` / `LoadJson` expose the equivalent C# API; installation requires Godot 4.7 .NET and .NET 8. GDScript declaration analysis remains a static text pass, including its GDScript test samples.
